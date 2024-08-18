@@ -1,0 +1,26 @@
+template <typename T>
+class QuadTree {
+public:
+    // Constructor and Destructor
+    QuadTree(const Math::Recti& boundary, int capacity, int depth);
+    ~QuadTree();
+
+    // Public method to insert an object
+    void insert(const T& object, const Math::Point2i& position);
+
+    // Public method to query objects within a given range
+    std::vector<T> queryRange(const Math::Recti& range) const;
+
+private:
+    // Private methods
+    void subdivide();
+    bool insertPoint(const T& object, const Math::Point2i& position);
+
+    // Member variables
+    Math::Recti boundary_;
+    int capacity_;
+    int depth_;
+    bool isLeaf_;
+    std::vector<std::pair<T, Math::Point2i>> objects_; // Store objects with their positions
+    QuadTree *tl_child_, *tr_child_, *bl_child_, *br_child_;
+};
