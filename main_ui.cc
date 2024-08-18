@@ -6,20 +6,21 @@
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
 
-// void print(QuadTree* root) {
-//     if(root == nullptr)
-//         return;
-//     else {
-//         std::cout<<"boundry:"<<root->boundry_<<"\n";
-//         std::cout<<"points_:"<<root->points_.size()<<"\n";
-//         std::cout<<"isLeaf_:"<<root->isLeaf_<<"\n";
-//         // std::cout<<"points_:"<<root->points_.size()<<"\n";
-//         print(root->tl_child_);
-//         print(root->tr_child_);
-//         print(root->bl_child_);
-//         print(root->br_child_);
-//     }
-// }
+template <typename OBJECT_NAME>
+void print(QuadTree<OBJECT_NAME>* root) {
+    if(root == nullptr)
+        return;
+    else {
+        std::cout<<"boundry:"<<root->boundry_<<"\n";
+        std::cout<<"points_:"<<root->points_.size()<<"\n";
+        std::cout<<"isLeaf_:"<<root->isLeaf_<<"\n";
+        print(root->tl_child_);
+        print(root->tr_child_);
+        print(root->bl_child_);
+        print(root->br_child_);
+    }
+}
+
 class Boid {
     public:
     Math::Point2i position;
@@ -30,21 +31,22 @@ auto position_getter = [](const Boid& obj) -> Math::Point2i {
 };
 
 void drawQuadTree(QuadTree<Boid>* root) {
+    const Color boundary_color {230, 41, 55, 75};
+    const Color point_color {GREEN};
+
     if(root == nullptr)
         return;
     else {
-        // std::cout<<"boundry:"<<root->boundry_<<"\n";
         DrawRectangleLines(
             root->boundry_.tl.x
             , root->boundry_.tl.y
             , root->boundry_.br.x - root->boundry_.tl.x
             , root->boundry_.br.y - root->boundry_.tl.y,
-            // RED
-            { 230, 41, 55, 75 }
+            boundary_color
         );
         for(auto node : root->points_) {
             const Math::Point2i& item = position_getter(*node);
-            DrawCircle(item.x, item.y, 2, GREEN);
+            DrawCircle(item.x, item.y, 2, point_color);
         }
         drawQuadTree(root->tl_child_);
         drawQuadTree(root->tr_child_);
@@ -64,7 +66,6 @@ Math::Point2i GenerateRandomVector2Positive(int yMax, int xMax) {
 void populate(std::vector<Math::Point2i>& points,  Math::Recti boundry, int count) {
     for(int i = 0; i<count; ++i) {
         Math::Point2i a = GenerateRandomVector2Positive(boundry.br.y, boundry.br.x);
-        // std::cout<<"point : "<<a<<"\n";
         points.push_back(a);
     }
 }
@@ -72,7 +73,6 @@ void populate(std::vector<Math::Point2i>& points,  Math::Recti boundry, int coun
 void populate(std::vector<Boid*> &boids,  Math::Recti boundry, int count) {
     for(int i = 0; i<count; ++i) {
         Math::Point2i a = GenerateRandomVector2Positive(boundry.br.y, boundry.br.x);
-        // std::cout<<"point : "<<a<<"\n";
         boids.push_back(new Boid{a});
     }
 }
@@ -84,73 +84,50 @@ int main() {
     std::vector<Boid*> data;
     Math::Recti boundry;
     int capacity = 5;
-    int depth = 0;
     int max_depth = 8;
     int n = 5000;
-
 
     const int WINDOW_WIDTH = 1200;
     const int WINDOW_HEIGHT = 1000;
     const int CELL_SIZE = 40;
-    // int FPS = 30;
-    int FPS = 1;
+    int FPS = 30;
     
 
     InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "raylib [core] example - basic window");
-    // SetTargetFPS(FPS);
-
-/*
-    populate(points, {{0,0},{WINDOW_WIDTH, WINDOW_HEIGHT}}, 1000);
-    QuadTreeMaker a;
-    QuadTree* root = a.BuildTree(points, {{0,0}, {WINDOW_WIDTH, WINDOW_HEIGHT}}, capacity, depth, 3);
-    // print(root);
-
-    std::cout<<"points[12] : "<<points[12];
-    std::vector<Math::Point2i> neighbors = a.findNeighbors(root, points[12]);
-    delete root;
-*/
+    SetTargetFPS(FPS);
 
     while(!WindowShouldClose()) {
 
-        // points.clear();
-        // populate(points, {{0,0},{WINDOW_WIDTH, WINDOW_HEIGHT}}, n);
         data.clear();
         populate(data, {{0,0},{WINDOW_WIDTH, WINDOW_HEIGHT}}, n);
-        // for(auto boid: data) {
-        //     std::cout<<"boid pos : "<<boid->position;
-        // }
-
         QuadTreeMaker<Boid> a;
-        QuadTree<Boid>* root = a.BuildTree(data, position_getter, {{0,0}, {WINDOW_WIDTH, WINDOW_HEIGHT}}, capacity, depth, max_depth);
-        // print(root);
+        QuadTree<Boid>* root = a.BuildTree(data, position_getter, {{0,0}, {WINDOW_WIDTH, WINDOW_HEIGHT}}, capacity, max_depth);
 
-        // std::cout<<"points[12] : "<<points[12];
-        std::vector<Boid*> neighbors = a.findNeighbors(root, position_getter(*data[12]), position_getter);
-
+        Boid search_item_boid = *data[12];
+        std::vector<Boid*> neighbors = a.findNeighbors(root, position_getter(search_item_boid), position_getter);
         BeginDrawing();
         ClearBackground(BLACK);
 
         // draw points;
-        // DrawCircleLines(data[12]->position.x, data[12]->position.y, 5, DARKBLUE);
-        Math::Point2i search_item = position_getter(*data[12]);
-        DrawCircleLines(search_item.x, search_item.y, 5, DARKBLUE);
+        // draw search target
+        DrawCircleLines(position_getter(search_item_boid).x, position_getter(search_item_boid).y, 5, DARKBLUE);
+        // draw neighbor
         for(auto data : neighbors) {
             const auto &item = position_getter(*data);
             DrawCircleLines(item.x, item.y, 5, BLUE);
         }
+        // draw quadtree
         drawQuadTree(root);
 
-        // draw splitting;
+        // draw fps;
         std::string fps_string = "FPS = "+std::to_string(GetFPS());
-        DrawText(fps_string.c_str(), 20, 20, 10, BLACK);
+        DrawText(fps_string.c_str(), 20, 20, 30, LIGHTGRAY);
 
         EndDrawing();
         std::cout<<"fps_string : "<<fps_string<<"\n";
         delete root;
         for(auto item: data)
             delete item;
-
-
     }
     return 0;
 }

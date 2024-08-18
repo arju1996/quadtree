@@ -27,7 +27,7 @@ template <typename OBJECT_NAME>
 class QuadTreeMaker {
 public:
     using PositionGetter = std::function<Math::Point2i(const OBJECT_NAME&)>;
-    QuadTree<OBJECT_NAME>* BuildTree(std::vector<OBJECT_NAME*> points, PositionGetter position_getter, Math::Recti boundry, int capacity, int depth, int max_depth);
+    QuadTree<OBJECT_NAME>* BuildTree(std::vector<OBJECT_NAME*> points, PositionGetter position_getter, Math::Recti boundry, int capacity, int max_depth, int depth = 0);
     std::vector<OBJECT_NAME*> findNeighbors(QuadTree<OBJECT_NAME>* root, Math::Point2i point, PositionGetter position_getter);
 };
 
@@ -39,8 +39,9 @@ QuadTree<OBJECT_NAME>* QuadTreeMaker<OBJECT_NAME>::BuildTree(std::vector<OBJECT_
         PositionGetter position_getter,
         Math::Recti boundry,
         int capacity,
-        int depth,
-        int max_depth) {
+        int max_depth,
+        int depth
+        ) {
     
     // step1: split to 4;
     // step2: find and assign points to 4 of them;
@@ -100,10 +101,10 @@ QuadTree<OBJECT_NAME>* QuadTreeMaker<OBJECT_NAME>::BuildTree(std::vector<OBJECT_
     }
     
     // first find the data that will come in tl_child;
-    current->tl_child_ = BuildTree(points_tl, position_getter, tl, capacity, depth + 1, max_depth);
-    current->tr_child_ = BuildTree(points_tr, position_getter, tr, capacity, depth + 1, max_depth);
-    current->bl_child_ = BuildTree(points_bl, position_getter, bl, capacity, depth + 1, max_depth);
-    current->br_child_ = BuildTree(points_br, position_getter, br, capacity, depth + 1, max_depth);
+    current->tl_child_ = BuildTree(points_tl, position_getter, tl, capacity, max_depth, depth + 1);
+    current->tr_child_ = BuildTree(points_tr, position_getter, tr, capacity, max_depth, depth + 1);
+    current->bl_child_ = BuildTree(points_bl, position_getter, bl, capacity, max_depth, depth + 1);
+    current->br_child_ = BuildTree(points_br, position_getter, br, capacity, max_depth, depth + 1);
     current->boundry_ = boundry;
     current->capacity_ = capacity;
     current->depth_ = depth;
