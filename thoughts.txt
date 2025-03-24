@@ -16,3 +16,6 @@ location, boid;
 
 
 so send in refernce of an object to the quad tree creation;
+
+
+i think the first milestone of quad tree is done:::

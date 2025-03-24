@@ -1,5 +1,7 @@
 #include <vector>
 #include "Math_helper_2.h"
+#include "raylib.h"
+
 
 template <typename OBJECT_NAME>
 class QuadTree {
@@ -9,6 +11,7 @@ public:
     // QuadTree(std::vector<Math::Point2i> data, Math::Recti boundry, int capacity, int depth);
     QuadTree(std::vector<OBJECT_NAME*> data, PositionGetter position_getter, Math::Recti boundry, int capacity, int depth);
     ~QuadTree();
+    void Draw(QuadTree* root, PositionGetter position_getter);
 // private:
     Math::Recti boundry_;
     int capacity_;
@@ -155,3 +158,29 @@ QuadTree<OBJECT_NAME>::~QuadTree() {
     delete bl_child_;
     delete br_child_;
 }   
+
+template <typename OBJECT_NAME>
+void QuadTree<OBJECT_NAME>::Draw(QuadTree<OBJECT_NAME>* root, PositionGetter position_getter) {
+    const Color boundary_color {230, 41, 55, 75};
+    const Color point_color {GREEN};
+
+    if(root == nullptr)
+        return;
+    else {
+        DrawRectangleLines(
+            root->boundry_.tl.x
+            , root->boundry_.tl.y
+            , root->boundry_.br.x - root->boundry_.tl.x
+            , root->boundry_.br.y - root->boundry_.tl.y,
+            boundary_color
+        );
+        // for(auto node : root->points_) {
+        //     const Math::Point2i& item = position_getter(*node);
+        //     DrawCircleLines(item.x, item.y, 10, point_color);
+        // }
+        Draw(root->tl_child_, position_getter);
+        Draw(root->tr_child_, position_getter);
+        Draw(root->bl_child_, position_getter);
+        Draw(root->br_child_, position_getter);
+    }
+}

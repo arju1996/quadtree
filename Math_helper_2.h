@@ -14,8 +14,16 @@
 // ugly ends here
 namespace Math {
 
+    // struct Vector2;
+
     struct Point2i {
         int x, y;
+        Point2i() = default;
+        Point2i(int x, int y) : x(x), y(y){
+
+        }
+        // Point2i(Vector2 vector) : x(vector.x), y(vector.y) {
+        // }
         Point2i operator+(const Point2i& other) const {
             return {x+other.x, y+other.y};
         }
@@ -60,6 +68,7 @@ namespace Math {
     struct Vector2 {
         float x, y;
 
+        Vector2() = default;
         Vector2(float x, float y) : x(x), y(y) {
         }
         Vector2(Point2i point) : x(point.x), y(point.y) {

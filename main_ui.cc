@@ -120,6 +120,7 @@ int main() {
         drawQuadTree(root);
 
         // draw fps;
+        // root->Draw(root);
         std::string fps_string = "FPS = "+std::to_string(GetFPS());
         DrawText(fps_string.c_str(), 20, 20, 30, LIGHTGRAY);
 
