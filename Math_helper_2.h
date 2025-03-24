@@ -33,7 +33,7 @@ namespace Math {
         }
 
         Point2i operator/(float div) const {
-            return {x/div, y/div};
+            return {static_cast<int>(x/div), static_cast<int>(y/div)};
         }
         
         friend std::ostream& operator<<(std::ostream& os, const Point2i& point) {
