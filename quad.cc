@@ -4,8 +4,8 @@
 //     makeQuadTree();
 // }
 
-template <typename OBJECT_NAME>
-QuadTree<OBJECT_NAME>::QuadTree(std::vector<OBJECT_NAME*> data, PositionGetter position_getter, Math::Recti boundry, int capacity, int depth)
+template <typename OBJECT_NAME, typename PointType, typename RectType>
+QuadTree<OBJECT_NAME, PointType, RectType>::QuadTree(std::vector<OBJECT_NAME*> data, PositionGetter position_getter, RectType boundry, int capacity, int depth)
     : boundry_(boundry)
     , capacity_(capacity)
     , depth_(depth)

@@ -3,24 +3,27 @@
 #include "quad.h"
 #include <random>
 
+#include "Math_helper_2.h"
+
+
 #include "raylib.h"
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
 
-template <typename OBJECT_NAME>
-void print(QuadTree<OBJECT_NAME>* root) {
-    if(root == nullptr)
-        return;
-    else {
-        std::cout<<"boundry:"<<root->boundry_<<"\n";
-        std::cout<<"points_:"<<root->points_.size()<<"\n";
-        std::cout<<"isLeaf_:"<<root->isLeaf_<<"\n";
-        print(root->tl_child_);
-        print(root->tr_child_);
-        print(root->bl_child_);
-        print(root->br_child_);
-    }
-}
+// template <typename OBJECT_NAME>
+// void print(QuadTree<OBJECT_NAME>* root) {
+//     if(root == nullptr)
+//         return;
+//     else {
+//         std::cout<<"boundry:"<<root->boundry_<<"\n";
+//         std::cout<<"points_:"<<root->points_.size()<<"\n";
+//         std::cout<<"isLeaf_:"<<root->isLeaf_<<"\n";
+//         print(root->tl_child_);
+//         print(root->tr_child_);
+//         print(root->bl_child_);
+//         print(root->br_child_);
+//     }
+// }
 
 class Boid {
     public:
@@ -31,7 +34,7 @@ auto position_getter = [](const Boid& obj) -> Math::Point2i {
     return obj.position;
 };
 
-void drawQuadTree(QuadTree<Boid>* root) {
+void drawQuadTree(QuadTree<Boid, Math::Point2i, Math::Recti>* root) {
     const Color boundary_color {230, 41, 55, 75};
     const Color point_color {GREEN};
 
@@ -97,12 +100,15 @@ int main() {
     InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "raylib [core] example - basic window");
     SetTargetFPS(FPS);
 
+    //populate(data, { {0,0},{WINDOW_WIDTH, WINDOW_HEIGHT} }, n);
+
+
     while(!WindowShouldClose()) {
 
         data.clear();
         populate(data, {{0,0},{WINDOW_WIDTH, WINDOW_HEIGHT}}, n);
-        QuadTreeMaker<Boid> a;
-        QuadTree<Boid>* root = a.BuildTree(data, position_getter, {{0,0}, {WINDOW_WIDTH, WINDOW_HEIGHT}}, capacity, max_depth);
+        QuadTreeMaker<Boid, Math::Point2i, Math::Recti> a;
+        QuadTree<Boid, Math::Point2i, Math::Recti>* root = a.BuildTree(data, position_getter, {{0,0}, {WINDOW_WIDTH, WINDOW_HEIGHT}}, capacity, max_depth);
 
         Boid search_item_boid = *data[12];
         std::vector<Boid*> neighbors = a.findNeighbors(root, position_getter(search_item_boid), position_getter);
