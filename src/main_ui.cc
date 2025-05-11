@@ -4,6 +4,7 @@
 #include <random>
 
 #include "Math_helper_2.h"
+#include "quadtree_drawing_raylib.h"
 
 
 #include "raylib.h"
@@ -124,7 +125,9 @@ int main() {
             DrawCircleLines(item.x, item.y, 5, BLUE);
         }
         // draw quadtree
-        drawQuadTree(root);
+        // drawQuadTree(root);
+        //
+        QuadtreeRaylibDrawing::drawQuadTree(root, position_getter);
 
         // draw fps;
         // root->Draw(root);

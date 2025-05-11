@@ -1,3 +1,6 @@
+#pragma once
+
+
 #include <functional>
 #include <vector>
 
@@ -11,9 +14,9 @@ public:
     using PositionGetter = std::function<PointType(const OBJECT_NAME&)>;
     QuadTree() = default;
     // QuadTree(std::vector<Math::Point2i> data, Math::Recti boundry, int capacity, int depth);
-    QuadTree(std::vector<OBJECT_NAME*> data, PositionGetter position_getter, RectType boundry, int capacity, int depth);
+    QuadTree(std::vector<OBJECT_NAME*> data, PositionGetter position_getter, RectType boundry, int capacity, int depth) = delete; // adding just for fun
     ~QuadTree();
-    void Draw(QuadTree* root, PositionGetter position_getter);
+    // void Draw(QuadTree* root, PositionGetter position_getter);
 // private:
     RectType boundry_;
     int capacity_;
@@ -161,30 +164,30 @@ QuadTree<OBJECT_NAME, PointType, RectType>::~QuadTree() {
     delete br_child_;
 }   
 
-template <typename OBJECT_NAME, typename PointType, typename RectType>
-void QuadTree<OBJECT_NAME, PointType, RectType>::Draw(QuadTree<OBJECT_NAME, PointType, RectType>* root, PositionGetter position_getter) {
-    /*
-    const Color boundary_color {230, 41, 55, 75};
-    const Color point_color {GREEN};
+// template <typename OBJECT_NAME, typename PointType, typename RectType>
+// void QuadTree<OBJECT_NAME, PointType, RectType>::Draw(QuadTree<OBJECT_NAME, PointType, RectType>* root, PositionGetter position_getter) {
+//     /*
+//     const Color boundary_color {230, 41, 55, 75};
+//     const Color point_color {GREEN};
 
-    if(root == nullptr)
-        return;
-    else {
-        DrawRectangleLines(
-            root->boundry_.tl.x
-            , root->boundry_.tl.y
-            , root->boundry_.br.x - root->boundry_.tl.x
-            , root->boundry_.br.y - root->boundry_.tl.y,
-            boundary_color
-        );
-        // for(auto node : root->points_) {
-        //     const Math::Point2i& item = position_getter(*node);
-        //     DrawCircleLines(item.x, item.y, 10, point_color);
-        // }
-        Draw(root->tl_child_, position_getter);
-        Draw(root->tr_child_, position_getter);
-        Draw(root->bl_child_, position_getter);
-        Draw(root->br_child_, position_getter);
-    }
-    */
-}
+//     if(root == nullptr)
+//         return;
+//     else {
+//         DrawRectangleLines(
+//             root->boundry_.tl.x
+//             , root->boundry_.tl.y
+//             , root->boundry_.br.x - root->boundry_.tl.x
+//             , root->boundry_.br.y - root->boundry_.tl.y,
+//             boundary_color
+//         );
+//         // for(auto node : root->points_) {
+//         //     const Math::Point2i& item = position_getter(*node);
+//         //     DrawCircleLines(item.x, item.y, 10, point_color);
+//         // }
+//         Draw(root->tl_child_, position_getter);
+//         Draw(root->tr_child_, position_getter);
+//         Draw(root->bl_child_, position_getter);
+//         Draw(root->br_child_, position_getter);
+//     }
+//     */
+// }
