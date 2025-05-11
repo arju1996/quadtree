@@ -4,19 +4,13 @@
 #include <functional>
 #include <vector>
 
-// #include "Math_helper_2.h"
-// #include "raylib.h"
-
-
 template <typename OBJECT_NAME, typename PointType, typename RectType>
 class QuadTree {
 public:
     using PositionGetter = std::function<PointType(const OBJECT_NAME&)>;
     QuadTree() = default;
-    // QuadTree(std::vector<Math::Point2i> data, Math::Recti boundry, int capacity, int depth);
     QuadTree(std::vector<OBJECT_NAME*> data, PositionGetter position_getter, RectType boundry, int capacity, int depth) = delete; // adding just for fun
     ~QuadTree();
-    // void Draw(QuadTree* root, PositionGetter position_getter);
 // private:
     RectType boundry_;
     int capacity_;
@@ -24,11 +18,6 @@ public:
     bool isLeaf_;
     std::vector<OBJECT_NAME*> points_;
     QuadTree<OBJECT_NAME, PointType, RectType>* tl_child_, *tr_child_, *bl_child_, *br_child_;
-
-    //
-    // void BuildTree(std::vector<Math::Point2i> points);
-    // QuadTree* BuildTree(std::vector<Math::Point2i> points);
-    // QuadTree* BuildTree(std::vector<Math::Point2i> points,  Math::Recti boundry, int capacity, int depth);
 };
 
 template <typename OBJECT_NAME, typename PointType, typename RectType>
@@ -36,7 +25,7 @@ class QuadTreeMaker {
 public:
     using PositionGetter = std::function<PointType(const OBJECT_NAME&)>;
     QuadTree<OBJECT_NAME, PointType, RectType>* BuildTree(std::vector<OBJECT_NAME*> points, PositionGetter position_getter, RectType boundry, int capacity, int max_depth, int depth = 0);
-    std::vector<OBJECT_NAME*> findNeighbors(QuadTree<OBJECT_NAME, PointType, RectType>* root, PointType point, PositionGetter position_getter);
+    std::vector<OBJECT_NAME*> findNeighbors(QuadTree<OBJECT_NAME, PointType, RectType>* root, PointType point);
 };
 
 
@@ -122,7 +111,7 @@ QuadTree<OBJECT_NAME, PointType, RectType>* QuadTreeMaker<OBJECT_NAME, PointType
 
 // ok looks like this dont need the PositionGetter
 template <typename OBJECT_NAME, typename PointType, typename RectType>
-std::vector<OBJECT_NAME*> QuadTreeMaker<OBJECT_NAME, PointType, RectType>::findNeighbors(QuadTree<OBJECT_NAME, PointType, RectType>* root, PointType point, PositionGetter position_getter) {
+std::vector<OBJECT_NAME*> QuadTreeMaker<OBJECT_NAME, PointType, RectType>::findNeighbors(QuadTree<OBJECT_NAME, PointType, RectType>* root, PointType point) {
     // need function to check if a point is inside a box/boundry
     if (root == nullptr) {
         return {};
@@ -141,15 +130,15 @@ std::vector<OBJECT_NAME*> QuadTreeMaker<OBJECT_NAME, PointType, RectType>::findN
             PointType mid = (root->boundry_.tl + root->boundry_.br) / 2.0f;
             if(point.x < mid.x) {
                 if(point.y < mid.y) {
-                    return findNeighbors(root->tl_child_, point, position_getter);
+                    return findNeighbors(root->tl_child_, point);
                 } else {
-                    return findNeighbors(root->bl_child_, point, position_getter);
+                    return findNeighbors(root->bl_child_, point);
                 }
             } else {
                 if(point.y < mid.y) {
-                    return findNeighbors(root->tr_child_, point, position_getter);
+                    return findNeighbors(root->tr_child_, point);
                 } else {
-                    return findNeighbors(root->br_child_, point, position_getter);
+                    return findNeighbors(root->br_child_, point);
                 }
             }
         }
@@ -162,32 +151,5 @@ QuadTree<OBJECT_NAME, PointType, RectType>::~QuadTree() {
     delete tr_child_;
     delete bl_child_;
     delete br_child_;
-}   
+}
 
-// template <typename OBJECT_NAME, typename PointType, typename RectType>
-// void QuadTree<OBJECT_NAME, PointType, RectType>::Draw(QuadTree<OBJECT_NAME, PointType, RectType>* root, PositionGetter position_getter) {
-//     /*
-//     const Color boundary_color {230, 41, 55, 75};
-//     const Color point_color {GREEN};
-
-//     if(root == nullptr)
-//         return;
-//     else {
-//         DrawRectangleLines(
-//             root->boundry_.tl.x
-//             , root->boundry_.tl.y
-//             , root->boundry_.br.x - root->boundry_.tl.x
-//             , root->boundry_.br.y - root->boundry_.tl.y,
-//             boundary_color
-//         );
-//         // for(auto node : root->points_) {
-//         //     const Math::Point2i& item = position_getter(*node);
-//         //     DrawCircleLines(item.x, item.y, 10, point_color);
-//         // }
-//         Draw(root->tl_child_, position_getter);
-//         Draw(root->tr_child_, position_getter);
-//         Draw(root->bl_child_, position_getter);
-//         Draw(root->br_child_, position_getter);
-//     }
-//     */
-// }
