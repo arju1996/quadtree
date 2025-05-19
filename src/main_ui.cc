@@ -35,31 +35,6 @@ auto position_getter = [](const Boid& obj) -> Math::Point2i {
     return obj.position;
 };
 
-void drawQuadTree(QuadTree<Boid, Math::Point2i, Math::Recti>* root) {
-    const Color boundary_color {230, 41, 55, 75};
-    const Color point_color {GREEN};
-
-    if(root == nullptr)
-        return;
-    else {
-        DrawRectangleLines(
-            root->boundry_.tl.x
-            , root->boundry_.tl.y
-            , root->boundry_.br.x - root->boundry_.tl.x
-            , root->boundry_.br.y - root->boundry_.tl.y,
-            boundary_color
-        );
-        for(auto node : root->points_) {
-            const Math::Point2i& item = position_getter(*node);
-            DrawCircle(item.x, item.y, 2, point_color);
-        }
-        drawQuadTree(root->tl_child_);
-        drawQuadTree(root->tr_child_);
-        drawQuadTree(root->bl_child_);
-        drawQuadTree(root->br_child_);
-    }
-}
-
 Math::Point2i GenerateRandomVector2Positive(int yMax, int xMax) {
     std::random_device rd;
     std::mt19937 gen(rd());
@@ -109,10 +84,10 @@ int main() {
         data.clear();
         populate(data, {{0,0},{WINDOW_WIDTH, WINDOW_HEIGHT}}, n);
         QuadTreeMaker<Boid, Math::Point2i, Math::Recti> a;
-        QuadTree<Boid, Math::Point2i, Math::Recti>* root = a.BuildTree(data, position_getter, {{0,0}, {WINDOW_WIDTH, WINDOW_HEIGHT}}, capacity, max_depth);
+        std::unique_ptr<QuadTree<Boid, Math::Point2i, Math::Recti>> root = a.BuildTree(data, position_getter, {{0,0}, {WINDOW_WIDTH, WINDOW_HEIGHT}}, capacity, max_depth);
 
         Boid search_item_boid = *data[12];
-        std::vector<Boid*> neighbors = a.findNeighbors(root, position_getter(search_item_boid), position_getter);
+        std::vector<Boid*> neighbors = a.findNeighbors(root.get(), position_getter(search_item_boid));
         BeginDrawing();
         ClearBackground(BLACK);
 
@@ -127,7 +102,7 @@ int main() {
         // draw quadtree
         // drawQuadTree(root);
         //
-        QuadtreeRaylibDrawing::drawQuadTree(root, position_getter);
+        QuadtreeRaylibDrawing::drawQuadTree(root.get(), position_getter);
 
         // draw fps;
         // root->Draw(root);
@@ -136,7 +111,6 @@ int main() {
 
         EndDrawing();
         std::cout<<"fps_string : "<<fps_string<<"\n";
-        delete root;
         for(auto item: data)
             delete item;
     }

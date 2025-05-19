@@ -23,10 +23,10 @@ namespace QuadtreeRaylibDrawing {
                 const PointType& item = position_getter(*node);
                 DrawCircle(item.x, item.y, 2, point_color);
             }
-            drawQuadTree(root->tl_child_, position_getter);
-            drawQuadTree(root->tr_child_, position_getter);
-            drawQuadTree(root->bl_child_, position_getter);
-            drawQuadTree(root->br_child_, position_getter);
+            drawQuadTree(root->tl_child_.get(), position_getter);
+            drawQuadTree(root->tr_child_.get(), position_getter);
+            drawQuadTree(root->bl_child_.get(), position_getter);
+            drawQuadTree(root->br_child_.get(), position_getter);
         }
     }
 }

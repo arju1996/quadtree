@@ -17,14 +17,14 @@ public:
     int depth_;
     bool isLeaf_;
     std::vector<OBJECT_NAME*> points_;
-    QuadTree<OBJECT_NAME, PointType, RectType>* tl_child_, *tr_child_, *bl_child_, *br_child_;
+    std::unique_ptr<QuadTree<OBJECT_NAME, PointType, RectType>> tl_child_, tr_child_, bl_child_, br_child_;
 };
 
 template <typename OBJECT_NAME, typename PointType, typename RectType>
 class QuadTreeMaker {
 public:
     using PositionGetter = std::function<PointType(const OBJECT_NAME&)>;
-    QuadTree<OBJECT_NAME, PointType, RectType>* BuildTree(std::vector<OBJECT_NAME*> points, PositionGetter position_getter, RectType boundry, int capacity, int max_depth, int depth = 0);
+    std::unique_ptr<QuadTree<OBJECT_NAME, PointType, RectType>> BuildTree(std::vector<OBJECT_NAME*> points, PositionGetter position_getter, RectType boundry, int capacity, int max_depth, int depth = 0);
     std::vector<OBJECT_NAME*> findNeighbors(QuadTree<OBJECT_NAME, PointType, RectType>* root, PointType point);
 };
 
@@ -32,7 +32,7 @@ public:
 
 //imple
 template <typename OBJECT_NAME, typename PointType, typename RectType>
-QuadTree<OBJECT_NAME, PointType, RectType>* QuadTreeMaker<OBJECT_NAME, PointType, RectType>::BuildTree(std::vector<OBJECT_NAME*> points,
+std::unique_ptr<QuadTree<OBJECT_NAME, PointType, RectType>> QuadTreeMaker<OBJECT_NAME, PointType, RectType>::BuildTree(std::vector<OBJECT_NAME*> points,
         PositionGetter position_getter,
         RectType boundry,
         int capacity,
@@ -46,7 +46,7 @@ QuadTree<OBJECT_NAME, PointType, RectType>* QuadTreeMaker<OBJECT_NAME, PointType
 
 
     //edge case
-    QuadTree<OBJECT_NAME, PointType, RectType>* current = new QuadTree<OBJECT_NAME, PointType, RectType>();
+    auto current = std::make_unique<QuadTree<OBJECT_NAME, PointType, RectType>>();
 
     if(points.size() <= capacity || depth >= max_depth) {
         current->boundry_ = boundry;
@@ -130,15 +130,15 @@ std::vector<OBJECT_NAME*> QuadTreeMaker<OBJECT_NAME, PointType, RectType>::findN
             PointType mid = (root->boundry_.tl + root->boundry_.br) / 2.0f;
             if(point.x < mid.x) {
                 if(point.y < mid.y) {
-                    return findNeighbors(root->tl_child_, point);
+                    return findNeighbors(root->tl_child_.get(), point);
                 } else {
-                    return findNeighbors(root->bl_child_, point);
+                    return findNeighbors(root->bl_child_.get(), point);
                 }
             } else {
                 if(point.y < mid.y) {
-                    return findNeighbors(root->tr_child_, point);
+                    return findNeighbors(root->tr_child_.get(), point);
                 } else {
-                    return findNeighbors(root->br_child_, point);
+                    return findNeighbors(root->br_child_.get(), point);
                 }
             }
         }
@@ -147,9 +147,9 @@ std::vector<OBJECT_NAME*> QuadTreeMaker<OBJECT_NAME, PointType, RectType>::findN
 
 template <typename OBJECT_NAME, typename PointType, typename RectType>
 QuadTree<OBJECT_NAME, PointType, RectType>::~QuadTree() {
-    delete tl_child_;
-    delete tr_child_;
-    delete bl_child_;
-    delete br_child_;
+    // delete tl_child_;
+    // delete tr_child_;
+    // delete bl_child_;
+    // delete br_child_;
 }
 
