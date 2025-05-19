@@ -4,37 +4,48 @@
 #include <functional>
 #include <vector>
 
-template <typename OBJECT_NAME, typename PointType, typename RectType>
+template <typename OBJECT_NAME, typename PointType, typename BoundType>
+class QuadTreeMaker;
+
+template <typename OBJECT_NAME, typename PointType, typename BoundType>
 class QuadTree {
 public:
     using PositionGetter = std::function<PointType(const OBJECT_NAME&)>;
     QuadTree() = default;
-    QuadTree(std::vector<OBJECT_NAME*> data, PositionGetter position_getter, RectType boundry, int capacity, int depth) = delete; // adding just for fun
+    QuadTree(std::vector<OBJECT_NAME*> data, PositionGetter position_getter, BoundType boundry, int capacity, int depth) = delete; // adding just for fun
     ~QuadTree();
-// private:
-    RectType boundry_;
+    // getters
+    const BoundType& getBoundry() const { return boundry_; }
+    const std::vector<OBJECT_NAME*>& getPoints() const { return points_; }
+    const std::unique_ptr<QuadTree<OBJECT_NAME, PointType, BoundType>>& getTLChild() const { return tl_child_; }
+    const std::unique_ptr<QuadTree<OBJECT_NAME, PointType, BoundType>>& getTRChild() const { return tr_child_; }
+    const std::unique_ptr<QuadTree<OBJECT_NAME, PointType, BoundType>>& getBLChild() const { return bl_child_; }
+    const std::unique_ptr<QuadTree<OBJECT_NAME, PointType, BoundType>>& getBRChild() const { return br_child_; }
+    friend class QuadTreeMaker<OBJECT_NAME, PointType, BoundType>;
+private:
+    BoundType boundry_;
     int capacity_;
     int depth_;
     bool isLeaf_;
     std::vector<OBJECT_NAME*> points_;
-    std::unique_ptr<QuadTree<OBJECT_NAME, PointType, RectType>> tl_child_, tr_child_, bl_child_, br_child_;
+    std::unique_ptr<QuadTree<OBJECT_NAME, PointType, BoundType>> tl_child_, tr_child_, bl_child_, br_child_;
 };
 
-template <typename OBJECT_NAME, typename PointType, typename RectType>
+template <typename OBJECT_NAME, typename PointType, typename BoundType>
 class QuadTreeMaker {
 public:
     using PositionGetter = std::function<PointType(const OBJECT_NAME&)>;
-    std::unique_ptr<QuadTree<OBJECT_NAME, PointType, RectType>> BuildTree(std::vector<OBJECT_NAME*> points, PositionGetter position_getter, RectType boundry, int capacity, int max_depth, int depth = 0);
-    std::vector<OBJECT_NAME*> findNeighbors(QuadTree<OBJECT_NAME, PointType, RectType>* root, PointType point);
+    std::unique_ptr<QuadTree<OBJECT_NAME, PointType, BoundType>> BuildTree(std::vector<OBJECT_NAME*> points, PositionGetter position_getter, BoundType boundry, int capacity, int max_depth, int depth = 0);
+    std::vector<OBJECT_NAME*> findNeighbors(QuadTree<OBJECT_NAME, PointType, BoundType>* root, PointType point);
 };
 
 
 
 //imple
-template <typename OBJECT_NAME, typename PointType, typename RectType>
-std::unique_ptr<QuadTree<OBJECT_NAME, PointType, RectType>> QuadTreeMaker<OBJECT_NAME, PointType, RectType>::BuildTree(std::vector<OBJECT_NAME*> points,
+template <typename OBJECT_NAME, typename PointType, typename BoundType>
+std::unique_ptr<QuadTree<OBJECT_NAME, PointType, BoundType>> QuadTreeMaker<OBJECT_NAME, PointType, BoundType>::BuildTree(std::vector<OBJECT_NAME*> points,
         PositionGetter position_getter,
-        RectType boundry,
+        BoundType boundry,
         int capacity,
         int max_depth,
         int depth
@@ -46,7 +57,7 @@ std::unique_ptr<QuadTree<OBJECT_NAME, PointType, RectType>> QuadTreeMaker<OBJECT
 
 
     //edge case
-    auto current = std::make_unique<QuadTree<OBJECT_NAME, PointType, RectType>>();
+    auto current = std::make_unique<QuadTree<OBJECT_NAME, PointType, BoundType>>();
 
     if(points.size() <= capacity || depth >= max_depth) {
         current->boundry_ = boundry;
@@ -63,7 +74,7 @@ std::unique_ptr<QuadTree<OBJECT_NAME, PointType, RectType>> QuadTreeMaker<OBJECT
     }
 
 
-    RectType tl, tr, bl, br;
+    BoundType tl, tr, bl, br;
 
     PointType mid = (boundry.tl + boundry.br) / 2.0f;
     tl.tl = boundry.tl;
@@ -110,8 +121,8 @@ std::unique_ptr<QuadTree<OBJECT_NAME, PointType, RectType>> QuadTreeMaker<OBJECT
 }
 
 // ok looks like this dont need the PositionGetter
-template <typename OBJECT_NAME, typename PointType, typename RectType>
-std::vector<OBJECT_NAME*> QuadTreeMaker<OBJECT_NAME, PointType, RectType>::findNeighbors(QuadTree<OBJECT_NAME, PointType, RectType>* root, PointType point) {
+template <typename OBJECT_NAME, typename PointType, typename BoundType>
+std::vector<OBJECT_NAME*> QuadTreeMaker<OBJECT_NAME, PointType, BoundType>::findNeighbors(QuadTree<OBJECT_NAME, PointType, BoundType>* root, PointType point) {
     // need function to check if a point is inside a box/boundry
     if (root == nullptr) {
         return {};
@@ -145,8 +156,8 @@ std::vector<OBJECT_NAME*> QuadTreeMaker<OBJECT_NAME, PointType, RectType>::findN
     }
 }
 
-template <typename OBJECT_NAME, typename PointType, typename RectType>
-QuadTree<OBJECT_NAME, PointType, RectType>::~QuadTree() {
+template <typename OBJECT_NAME, typename PointType, typename BoundType>
+QuadTree<OBJECT_NAME, PointType, BoundType>::~QuadTree() {
     // delete tl_child_;
     // delete tr_child_;
     // delete bl_child_;
