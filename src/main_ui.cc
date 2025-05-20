@@ -11,21 +11,6 @@
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
 
-// template <typename OBJECT_NAME>
-// void print(QuadTree<OBJECT_NAME>* root) {
-//     if(root == nullptr)
-//         return;
-//     else {
-//         std::cout<<"boundry:"<<root->boundry_<<"\n";
-//         std::cout<<"points_:"<<root->points_.size()<<"\n";
-//         std::cout<<"isLeaf_:"<<root->isLeaf_<<"\n";
-//         print(root->tl_child_);
-//         print(root->tr_child_);
-//         print(root->bl_child_);
-//         print(root->br_child_);
-//     }
-// }
-
 class Boid {
     public:
     Math::Point2i position;
@@ -43,13 +28,6 @@ Math::Point2i GenerateRandomVector2Positive(int yMax, int xMax) {
     return {dist(gen), dist2(gen)};
 }
 
-void populate(std::vector<Math::Point2i>& points,  Math::Recti boundry, int count) {
-    for(int i = 0; i<count; ++i) {
-        Math::Point2i a = GenerateRandomVector2Positive(boundry.br.y, boundry.br.x);
-        points.push_back(a);
-    }
-}
-
 void populate(std::vector<Boid*> &boids,  Math::Recti boundry, int count) {
     for(int i = 0; i<count; ++i) {
         Math::Point2i a = GenerateRandomVector2Positive(boundry.br.y, boundry.br.x);
@@ -58,9 +36,6 @@ void populate(std::vector<Boid*> &boids,  Math::Recti boundry, int count) {
 }
 
 int main() {
-    std::cout<<"hello world;";
-
-    std::vector<Math::Point2i> points;
     std::vector<Boid*> data;
     Math::Recti boundry;
     int capacity = 5;
@@ -76,36 +51,31 @@ int main() {
     InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "raylib [core] example - basic window");
     SetTargetFPS(FPS);
 
-    //populate(data, { {0,0},{WINDOW_WIDTH, WINDOW_HEIGHT} }, n);
-
-
     while(!WindowShouldClose()) {
-
         data.clear();
         populate(data, {{0,0},{WINDOW_WIDTH, WINDOW_HEIGHT}}, n);
+
         QuadTreeMaker<Boid, Math::Point2i, Math::Recti> a;
         std::unique_ptr<QuadTree<Boid, Math::Point2i, Math::Recti>> root = a.BuildTree(data, position_getter, {{0,0}, {WINDOW_WIDTH, WINDOW_HEIGHT}}, capacity, max_depth);
 
         Boid search_item_boid = *data[12];
         std::vector<Boid*> neighbors = a.findNeighbors(root.get(), position_getter(search_item_boid));
+        
         BeginDrawing();
         ClearBackground(BLACK);
 
-        // draw points;
         // draw search target
         DrawCircleLines(position_getter(search_item_boid).x, position_getter(search_item_boid).y, 5, DARKBLUE);
-        // draw neighbor
-        for(auto data : neighbors) {
-            const auto &item = position_getter(*data);
+        // draw neighbors
+        for(auto neighbor : neighbors) {
+            const auto &item = position_getter(*neighbor);
             DrawCircleLines(item.x, item.y, 5, BLUE);
         }
         // draw quadtree
-        // drawQuadTree(root);
-        //
         QuadtreeRaylibDrawing::drawQuadTree(root.get(), position_getter);
+        // QuadtreeRaylibDrawing::print(root.get());
 
         // draw fps;
-        // root->Draw(root);
         std::string fps_string = "FPS = "+std::to_string(GetFPS());
         DrawText(fps_string.c_str(), 20, 20, 30, LIGHTGRAY);
 

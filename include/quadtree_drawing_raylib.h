@@ -32,4 +32,20 @@ namespace QuadtreeRaylibDrawing {
 
         }
     }
+
+
+    template <typename OBJECT_NAME, typename PointType, typename BoundType>
+    void print(QuadTree<OBJECT_NAME, PointType, BoundType>* root) {
+        if(root == nullptr)
+            return;
+        else {
+            std::cout<<"boundry:"<<root->getBoundry()<<"\n";
+            std::cout<<"points_:"<<root->getPoints().size()<<"\n";
+            std::cout<<"isLeaf_:"<<root->getisleaf()<<"\n";
+            print(root->getTLChild().get());
+            print(root->getTRChild().get());
+            print(root->getBLChild().get());
+            print(root->getBRChild().get());
+        }
+    }
 }

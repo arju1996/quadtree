@@ -2,6 +2,7 @@
 
 
 #include <functional>
+#include <memory>
 #include <vector>
 
 template <typename OBJECT_NAME, typename PointType, typename BoundType>
@@ -13,9 +14,11 @@ public:
     using PositionGetter = std::function<PointType(const OBJECT_NAME&)>;
     QuadTree() = default;
     QuadTree(std::vector<OBJECT_NAME*> data, PositionGetter position_getter, BoundType boundry, int capacity, int depth) = delete; // adding just for fun
-    ~QuadTree();
+    ~QuadTree() = default;
     // getters
     const BoundType& getBoundry() const { return boundry_; }
+    const bool getisleaf() const { return isLeaf_; }
+    const int getCapacity() const { return capacity_; }
     const std::vector<OBJECT_NAME*>& getPoints() const { return points_; }
     const std::unique_ptr<QuadTree<OBJECT_NAME, PointType, BoundType>>& getTLChild() const { return tl_child_; }
     const std::unique_ptr<QuadTree<OBJECT_NAME, PointType, BoundType>>& getTRChild() const { return tr_child_; }
@@ -41,7 +44,7 @@ public:
 
 
 
-//imple
+//implementations
 template <typename OBJECT_NAME, typename PointType, typename BoundType>
 std::unique_ptr<QuadTree<OBJECT_NAME, PointType, BoundType>> QuadTreeMaker<OBJECT_NAME, PointType, BoundType>::BuildTree(std::vector<OBJECT_NAME*> points,
         PositionGetter position_getter,
@@ -52,8 +55,9 @@ std::unique_ptr<QuadTree<OBJECT_NAME, PointType, BoundType>> QuadTreeMaker<OBJEC
         ) {
     
     // step1: split to 4;
-    // step2: find and assign points to 4 of them;
-    // step3: call BuildTree
+    // step2: find and assign points to 4 of the child nodes;
+    // step3: call BuildTree recursively on the 4 child nodes;
+    // step4: return the current node which will be the root of the tree;
 
 
     //edge case
@@ -120,7 +124,6 @@ std::unique_ptr<QuadTree<OBJECT_NAME, PointType, BoundType>> QuadTreeMaker<OBJEC
     return current;
 }
 
-// ok looks like this dont need the PositionGetter
 template <typename OBJECT_NAME, typename PointType, typename BoundType>
 std::vector<OBJECT_NAME*> QuadTreeMaker<OBJECT_NAME, PointType, BoundType>::findNeighbors(QuadTree<OBJECT_NAME, PointType, BoundType>* root, PointType point) {
     // need function to check if a point is inside a box/boundry
@@ -131,11 +134,6 @@ std::vector<OBJECT_NAME*> QuadTreeMaker<OBJECT_NAME, PointType, BoundType>::find
         return {};
     } else {
         if(root->isLeaf_) {
-            // return all items in this
-            // for(auto item: root->points_) {
-            //     const Math::Point2i& item2 = position_getter(*item);
-            //     std::cout<<"neightbor : "<<item2<<"\n";
-            // }
             return root->points_;
         } else {
             PointType mid = (root->boundry_.tl + root->boundry_.br) / 2.0f;
@@ -154,13 +152,5 @@ std::vector<OBJECT_NAME*> QuadTreeMaker<OBJECT_NAME, PointType, BoundType>::find
             }
         }
     }
-}
-
-template <typename OBJECT_NAME, typename PointType, typename BoundType>
-QuadTree<OBJECT_NAME, PointType, BoundType>::~QuadTree() {
-    // delete tl_child_;
-    // delete tr_child_;
-    // delete bl_child_;
-    // delete br_child_;
 }
 
