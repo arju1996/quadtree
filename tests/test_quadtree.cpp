@@ -36,23 +36,23 @@ void testBasicInsertion() {
     std::cout << "Testing basic insertion..." << std::endl;
     
     // Create maker and position getter
-    QuadTreeMaker<TestObject, Point, Rectangle> maker;
+    QuadTree<TestObject, Point, Rectangle> quadtree;
     auto positionGetter = [](const TestObject& obj) { return obj.position; };
     
     // Create tree with capacity 2
     Rectangle boundary(Point(0, 0), Point(100, 100));
-    auto tree = maker.BuildTree({}, positionGetter, boundary, 2, 3);
+    auto tree = quadtree.BuildTree({}, positionGetter, boundary, 2, 3);
     
     // Test 1: Insert single object
     TestObject obj1(10, 10, 1);
-    maker.insert(tree, &obj1);
+    quadtree.insert(tree, &obj1);
     assert(tree->getPoints().size() == 1);
     assert(tree->getisleaf() == true);
     std::cout << "✓ Single insertion passed" << std::endl;
     
     // Test 2: Insert within capacity
     TestObject obj2(20, 20, 2);
-    maker.insert(tree, &obj2);
+    quadtree.insert(tree, &obj2);
     std::cout << "tree->getPoints().size() = "<<tree->getPoints().size()<< std::endl;
     std::cout << "tree->getisleaf() = "<<tree->getisleaf()<< std::endl;
     assert(tree->getPoints().size() == 2);
@@ -63,20 +63,20 @@ void testBasicInsertion() {
 void testSubdivision() {
     std::cout << "Testing subdivision..." << std::endl;
     
-    QuadTreeMaker<TestObject, Point, Rectangle> maker;
+    QuadTree<TestObject, Point, Rectangle> quadtree;
     auto positionGetter = [](const TestObject& obj) { return obj.position; };
     
     Rectangle boundary(Point(0, 0), Point(100, 100));
-    auto tree = maker.BuildTree({}, positionGetter, boundary, 2, 3);
+    auto tree = quadtree.BuildTree({}, positionGetter, boundary, 2, 3);
     
     // Insert objects to trigger subdivision
     TestObject obj1(10, 10, 1);  // Top-left
     TestObject obj2(20, 20, 2);  // Top-left
     TestObject obj3(30, 30, 3);  // Top-left (should trigger subdivision)
     
-    maker.insert(tree, &obj1);
-    maker.insert(tree, &obj2);
-    maker.insert(tree, &obj3);
+    quadtree.insert(tree, &obj1);
+    quadtree.insert(tree, &obj2);
+    quadtree.insert(tree, &obj3);
     
     assert(tree->getisleaf() == false);
     assert(tree->getTLChild() != nullptr);
@@ -90,11 +90,11 @@ void testSubdivision() {
 void testDistributedInsertion() {
     std::cout << "Testing distributed insertion..." << std::endl;
     
-    QuadTreeMaker<TestObject, Point, Rectangle> maker;
+    QuadTree<TestObject, Point, Rectangle> quadtree;
     auto positionGetter = [](const TestObject& obj) { return obj.position; };
     
     Rectangle boundary(Point(0, 0), Point(100, 100));
-    auto tree = maker.BuildTree({}, positionGetter, boundary, 2, 3);
+    auto tree = quadtree.BuildTree({}, positionGetter, boundary, 2, 3);
     
     // Insert objects in different quadrants
     TestObject obj1(25, 25, 1);  // Top-left
@@ -103,11 +103,11 @@ void testDistributedInsertion() {
     TestObject obj4(75, 75, 4);  // Bottom-right
     TestObject obj5(10, 10, 5);  // Another top-left (should trigger subdivision)
     
-    maker.insert(tree, &obj1);
-    maker.insert(tree, &obj2);
-    maker.insert(tree, &obj3);
-    maker.insert(tree, &obj4);
-    maker.insert(tree, &obj5);
+    quadtree.insert(tree, &obj1);
+    quadtree.insert(tree, &obj2);
+    quadtree.insert(tree, &obj3);
+    quadtree.insert(tree, &obj4);
+    quadtree.insert(tree, &obj5);
     
     assert(tree->getisleaf() == false);
     
@@ -124,18 +124,18 @@ void testDistributedInsertion() {
 void testClusteredPoints() {
     std::cout << "Testing clustered points (your original concern)..." << std::endl;
     
-    QuadTreeMaker<TestObject, Point, Rectangle> maker;
+    QuadTree<TestObject, Point, Rectangle> quadtree;
     auto positionGetter = [](const TestObject& obj) { return obj.position; };
     
     Rectangle boundary(Point(0, 0), Point(100, 100));
-    // auto tree = maker.BuildTree({}, positionGetter, boundary, 2, 3);
-    auto tree = maker.BuildTree({}, positionGetter, boundary, 7, 3);
+    // auto tree = quadtree.BuildTree({}, positionGetter, boundary, 2, 3);
+    auto tree = quadtree.BuildTree({}, positionGetter, boundary, 7, 3);
     
     // Insert many objects in same area
     std::vector<TestObject> objects;
     for (int i = 0; i < 10; ++i) {
         objects.emplace_back(10 + i, 10 + i, i);  // All in top-left area
-        maker.insert(tree, &objects.back());
+        quadtree.insert(tree, &objects.back());
     }
     
     // Should have subdivided recursively
@@ -150,20 +150,20 @@ void testClusteredPoints() {
 void testEdgeCases() {
     std::cout << "Testing edge cases..." << std::endl;
     
-    QuadTreeMaker<TestObject, Point, Rectangle> maker;
+    QuadTree<TestObject, Point, Rectangle> quadtree;
     auto positionGetter = [](const TestObject& obj) { return obj.position; };
     
     Rectangle boundary(Point(0, 0), Point(100, 100));
-    auto tree = maker.BuildTree({}, positionGetter, boundary, 2, 3);
+    auto tree = quadtree.BuildTree({}, positionGetter, boundary, 2, 3);
     
     // Test boundary points
     TestObject obj1(0, 0, 1);    // Corner
     TestObject obj2(50, 50, 2);  // Center
     TestObject obj3(100, 100, 3); // Other corner
     
-    maker.insert(tree, &obj1);
-    maker.insert(tree, &obj2);
-    maker.insert(tree, &obj3);
+    quadtree.insert(tree, &obj1);
+    quadtree.insert(tree, &obj2);
+    quadtree.insert(tree, &obj3);
     
     // Should trigger subdivision
     assert(tree->getisleaf() == false);

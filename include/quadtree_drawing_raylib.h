@@ -5,7 +5,7 @@
 
 namespace QuadtreeRaylibDrawing {
     template <typename OBJECT_NAME, typename PointType, typename BoundType>
-    void drawQuadTree(QuadTree<OBJECT_NAME, PointType, BoundType>* root, typename QuadTree<OBJECT_NAME, PointType, BoundType>::PositionGetter position_getter) {
+    void drawQuadTree(QuadTreeNode<OBJECT_NAME, PointType, BoundType>* root, typename QuadTreeNode<OBJECT_NAME, PointType, BoundType>::PositionGetter position_getter) {
                 const Color boundary_color {230, 41, 55, 75};
         const Color point_color {GREEN};
 
@@ -35,7 +35,7 @@ namespace QuadtreeRaylibDrawing {
 
 
     template <typename OBJECT_NAME, typename PointType, typename BoundType>
-    void print(QuadTree<OBJECT_NAME, PointType, BoundType>* root) {
+    void print(QuadTreeNode<OBJECT_NAME, PointType, BoundType>* root) {
         if(root == nullptr)
             return;
         else {
