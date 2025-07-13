@@ -29,5 +29,7 @@ add_executable(quad
         src/main_ui.cc
         )
 
+add_executable(quad_test tests/test_quadtree.cpp )
+
 target_link_libraries(quad raylib )
 target_link_libraries(quad winmm.lib)
