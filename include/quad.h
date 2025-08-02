@@ -49,16 +49,16 @@ private:
     int max_depth_;
 
     // for remove
-    bool exists(std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>>& root, OBJECT_NAME* object);
-    QuadTreeNode<OBJECT_NAME, PointType, BoundType>* findnode_thisitem_existing(std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>>& root, OBJECT_NAME* object);
+    bool exists(const std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>>& root, const OBJECT_NAME* object) const;
+    QuadTreeNode<OBJECT_NAME, PointType, BoundType>* findnode_thisitem_existing(const std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>>& root, const OBJECT_NAME* object);
 
     // for insert
     void subdivide(std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>>& current);
     void initializeChild(std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>>& child, BoundType boundry, int depth, std::vector<OBJECT_NAME*> points = {});
 
     // for findNeighbors
-    bool partInChild(QuadTreeNode<OBJECT_NAME, PointType, BoundType>* current, BoundType rect);
-    std::vector<OBJECT_NAME*> collectAllPoints(QuadTreeNode<OBJECT_NAME, PointType, BoundType>* current);
+    bool partInChild(const QuadTreeNode<OBJECT_NAME, PointType, BoundType>* current, BoundType rect) const;
+    std::vector<OBJECT_NAME*> collectAllPoints(const QuadTreeNode<OBJECT_NAME, PointType, BoundType>* current) const;
 };
 
 
@@ -199,7 +199,7 @@ void QuadTree<OBJECT_NAME, PointType, BoundType>::insert(std::unique_ptr<QuadTre
 }
 
 template <typename OBJECT_NAME, typename PointType, typename BoundType>
-bool QuadTree<OBJECT_NAME, PointType, BoundType>::exists(std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>>& root, OBJECT_NAME* object) {
+bool QuadTree<OBJECT_NAME, PointType, BoundType>::exists(const std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>>& root, const OBJECT_NAME* object) const {
     
     if (!object) throw std::runtime_error("object is null");
     if (!root) throw std::runtime_error("root is null");
@@ -236,7 +236,7 @@ bool QuadTree<OBJECT_NAME, PointType, BoundType>::exists(std::unique_ptr<QuadTre
 }
 
 template <typename OBJECT_NAME, typename PointType, typename BoundType>
-QuadTreeNode<OBJECT_NAME, PointType, BoundType>* QuadTree<OBJECT_NAME, PointType, BoundType>::findnode_thisitem_existing(std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>>& root, OBJECT_NAME* object) {
+QuadTreeNode<OBJECT_NAME, PointType, BoundType>* QuadTree<OBJECT_NAME, PointType, BoundType>::findnode_thisitem_existing(const std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>>& root, const OBJECT_NAME* object) {
     
     if (!object) throw std::runtime_error("object is null");
     if (!root) throw std::runtime_error("root is null");
@@ -417,12 +417,12 @@ std::vector<OBJECT_NAME*> QuadTree<OBJECT_NAME, PointType, BoundType>::findNeigh
 }
 
 template <typename OBJECT_NAME, typename PointType, typename BoundType>
-bool QuadTree<OBJECT_NAME, PointType, BoundType>::partInChild(QuadTreeNode<OBJECT_NAME, PointType, BoundType>* current, BoundType rect) {
+bool QuadTree<OBJECT_NAME, PointType, BoundType>::partInChild(const QuadTreeNode<OBJECT_NAME, PointType, BoundType>* current, BoundType rect) const {
     return current && current->boundry_.intersects(rect);
 }
 
 template <typename OBJECT_NAME, typename PointType, typename BoundType>
-std::vector<OBJECT_NAME*> QuadTree<OBJECT_NAME, PointType, BoundType>::collectAllPoints(QuadTreeNode<OBJECT_NAME, PointType, BoundType>* current) {
+std::vector<OBJECT_NAME*> QuadTree<OBJECT_NAME, PointType, BoundType>::collectAllPoints(const QuadTreeNode<OBJECT_NAME, PointType, BoundType>* current) const {
     if (current == nullptr) return {};
     std::vector<OBJECT_NAME*> result;
     if(current->isLeaf_) {
