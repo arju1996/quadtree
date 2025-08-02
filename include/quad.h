@@ -28,6 +28,7 @@ private:
     BoundType boundry_;
     int depth_;
     bool isLeaf_;
+    bool needCleanup_;
     std::vector<OBJECT_NAME*> points_;
     std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>> tl_child_, tr_child_, bl_child_, br_child_;
 };
@@ -38,14 +39,26 @@ public:
     using PositionGetter = std::function<PointType(const OBJECT_NAME&)>;
     std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>> BuildTree(std::vector<OBJECT_NAME*> points, PositionGetter position_getter, BoundType boundry, int capacity, int max_depth, int depth = 0);
     std::vector<OBJECT_NAME*> findNeighbors(QuadTreeNode<OBJECT_NAME, PointType, BoundType>* root, PointType point);
+    std::vector<OBJECT_NAME*> findNeighbors(QuadTreeNode<OBJECT_NAME, PointType, BoundType>* root, BoundType point);
     void insert(std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>>& root, OBJECT_NAME* object);
-    void subdivide(std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>>& current);
-    void initializeChild(std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>>& child, BoundType boundry, int depth, std::vector<OBJECT_NAME*> points = {});
+    void remove(std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>>& root, OBJECT_NAME* object);
 
 private:
     PositionGetter position_getter_;
     int capacity_;
     int max_depth_;
+
+    // for remove
+    bool exists(std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>>& root, OBJECT_NAME* object);
+    QuadTreeNode<OBJECT_NAME, PointType, BoundType>* findnode_thisitem_existing(std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>>& root, OBJECT_NAME* object);
+
+    // for insert
+    void subdivide(std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>>& current);
+    void initializeChild(std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>>& child, BoundType boundry, int depth, std::vector<OBJECT_NAME*> points = {});
+
+    // for findNeighbors
+    bool partInChild(QuadTreeNode<OBJECT_NAME, PointType, BoundType>* current, BoundType rect);
+    std::vector<OBJECT_NAME*> collectAllPoints(QuadTreeNode<OBJECT_NAME, PointType, BoundType>* current);
 };
 
 
@@ -61,6 +74,7 @@ void QuadTree<OBJECT_NAME, PointType, BoundType>::initializeChild(
     child->depth_ = depth;
     child->points_ = points;
     child->isLeaf_ = true;
+    child->needCleanup_ = false;
 }
 
 template <typename OBJECT_NAME, typename PointType, typename BoundType>
@@ -85,8 +99,10 @@ void QuadTree<OBJECT_NAME, PointType, BoundType>::subdivide(std::unique_ptr<Quad
     br.tl = mid;
     br.br = current->boundry_.br;
 
+    // can non-leaf node store data?
+    std::vector<OBJECT_NAME*> buffer = std::move(current->points_);
     std::vector<OBJECT_NAME*> points_tl, points_tr, points_bl, points_br; 
-    for (auto obj: current->points_) {
+    for (auto obj: buffer) {
         const PointType& item = position_getter_(*obj);
         // is a point within which of the crossing?
         if(item.x < mid.x) {
@@ -149,7 +165,6 @@ void QuadTree<OBJECT_NAME, PointType, BoundType>::insert(std::unique_ptr<QuadTre
     BoundType boundry = root->getBoundry();
     PointType mid = (boundry.tl + boundry.br) / 2.0f;
 
-    // make this bit neater    
     if(root->getisleaf()) {
         // can I add one more without exceeding capacity
         if(root->points_.size() < capacity_) {
@@ -160,8 +175,8 @@ void QuadTree<OBJECT_NAME, PointType, BoundType>::insert(std::unique_ptr<QuadTre
                 subdivide(root);
             } else {
                 // can final leaf nodes exceed capacity?
-                // root->points_.push_back(object);
-                throw std::runtime_error("cannot insert, size full");
+                root->points_.push_back(object);
+                // throw std::runtime_error("cannot insert, size full");
             }
         }
     }
@@ -184,6 +199,112 @@ void QuadTree<OBJECT_NAME, PointType, BoundType>::insert(std::unique_ptr<QuadTre
 }
 
 template <typename OBJECT_NAME, typename PointType, typename BoundType>
+bool QuadTree<OBJECT_NAME, PointType, BoundType>::exists(std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>>& root, OBJECT_NAME* object) {
+    
+    if (!object) throw std::runtime_error("object is null");
+    if (!root) throw std::runtime_error("root is null");
+    if (!position_getter_) throw std::runtime_error("position functor is null");
+    // i could seperate the gaurds before the recursion
+
+    const PointType& item = position_getter_(*object);
+    
+    BoundType boundry = root->getBoundry();
+    PointType mid = (boundry.tl + boundry.br) / 2.0f;
+
+    if(root->getisleaf()) {
+        auto found = std::find(root->points_.begin(), root->points_.end(), object);
+        if (found != root->points_.end())
+            return true;
+        else
+            return false;
+    } else {
+        PointType mid = (root->boundry_.tl + root->boundry_.br) / 2.0f;
+        if(item.x < mid.x) {
+            if(item.y < mid.y) {
+                return exists(root->tl_child_, object);
+            } else {
+                return exists(root->bl_child_, object);
+            }
+        } else {
+            if(item.y < mid.y) {
+                return exists(root->tr_child_, object);
+            } else {
+                return exists(root->br_child_, object);
+            }
+        }
+    }
+}
+
+template <typename OBJECT_NAME, typename PointType, typename BoundType>
+QuadTreeNode<OBJECT_NAME, PointType, BoundType>* QuadTree<OBJECT_NAME, PointType, BoundType>::findnode_thisitem_existing(std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>>& root, OBJECT_NAME* object) {
+    
+    if (!object) throw std::runtime_error("object is null");
+    if (!root) throw std::runtime_error("root is null");
+    if (!position_getter_) throw std::runtime_error("position functor is null");
+    // i could seperate the gaurds before the recursion
+
+    const PointType& item = position_getter_(*object);
+    
+    BoundType boundry = root->getBoundry();
+    PointType mid = (boundry.tl + boundry.br) / 2.0f;
+
+    if(root->getisleaf()) {
+        auto found = std::find(root->points_.begin(), root->points_.end(), object);
+        if (found != root->points_.end())
+            return root.get();
+        else
+            return nullptr;
+    } else {
+        PointType mid = (root->boundry_.tl + root->boundry_.br) / 2.0f;
+        if(item.x < mid.x) {
+            if(item.y < mid.y) {
+                return findnode_thisitem_existing(root->tl_child_, object);
+            } else {
+                return findnode_thisitem_existing(root->bl_child_, object);
+            }
+        } else {
+            if(item.y < mid.y) {
+                return findnode_thisitem_existing(root->tr_child_, object);
+            } else {
+                return findnode_thisitem_existing(root->br_child_, object);
+            }
+        }
+    }
+}
+
+template <typename OBJECT_NAME, typename PointType, typename BoundType>
+void QuadTree<OBJECT_NAME, PointType, BoundType>::remove(std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>>& root, OBJECT_NAME* object) {
+    
+    if (!object) throw std::runtime_error("object is null");
+    if (!root) throw std::runtime_error("root is null");
+    if (!position_getter_) throw std::runtime_error("position functor is null");
+    // i could seperate the gaurds before the recursion
+
+    const PointType& item = position_getter_(*object);
+    
+    BoundType boundry = root->getBoundry();
+    PointType mid = (boundry.tl + boundry.br) / 2.0f;
+
+    if(!exists(root, object)) {
+        return;
+    }
+
+    // oh man, should i make this doubly linked now?
+    auto* node = findnode_thisitem_existing(root, object);
+    if(!node)
+        return;
+    
+    auto loc = std::find(node->points_.begin(), node->points_.end(), object);
+    if(loc != node->points_.end()) {
+        node->points_.erase(loc);
+        std::cout<<"removed from quadtree "<<"\n";
+    }
+
+    // mark the node for cleanup (ie collapse parents nodes if possible)
+    node->needCleanup_ = true;
+}
+
+template <typename OBJECT_NAME, typename PointType, typename BoundType>
 std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>> QuadTree<OBJECT_NAME, PointType, BoundType>::BuildTree(std::vector<OBJECT_NAME*> points,
         PositionGetter position_getter,
         BoundType boundry,
@@ -194,6 +315,7 @@ std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>> QuadTree<OBJECT
     
     position_getter_ = position_getter;
     max_depth_ = max_depth;
+    capacity_ = capacity;
     // step1: split to 4;
     // step2: find and assign points to 4 of the child nodes;
     // step3: call BuildTree recursively on the 4 child nodes;
@@ -207,6 +329,7 @@ std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>> QuadTree<OBJECT
         current->boundry_ = boundry;
         current->depth_ = depth;
         current->isLeaf_ = true;
+        current->needCleanup_ = false;
         current->points_ = points;
         current->tl_child_ = nullptr;
         current->tr_child_ = nullptr;
@@ -259,6 +382,7 @@ std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>> QuadTree<OBJECT
     current->boundry_ = boundry;
     current->depth_ = depth;
     current->isLeaf_ = false;
+    current->needCleanup_ = false;
     return current;
 }
 
@@ -292,3 +416,74 @@ std::vector<OBJECT_NAME*> QuadTree<OBJECT_NAME, PointType, BoundType>::findNeigh
     }
 }
 
+template <typename OBJECT_NAME, typename PointType, typename BoundType>
+bool QuadTree<OBJECT_NAME, PointType, BoundType>::partInChild(QuadTreeNode<OBJECT_NAME, PointType, BoundType>* current, BoundType rect) {
+    return current && current->boundry_.intersects(rect);
+}
+
+template <typename OBJECT_NAME, typename PointType, typename BoundType>
+std::vector<OBJECT_NAME*> QuadTree<OBJECT_NAME, PointType, BoundType>::collectAllPoints(QuadTreeNode<OBJECT_NAME, PointType, BoundType>* current) {
+    if (current == nullptr) return {};
+    std::vector<OBJECT_NAME*> result;
+    if(current->isLeaf_) {
+        result.insert(result.end(), current->points_.begin(), current->points_.end());
+    } else {
+        auto tl_points = collectAllPoints(current->tl_child_.get());
+        auto tr_points = collectAllPoints(current->tr_child_.get());
+        auto bl_points = collectAllPoints(current->bl_child_.get());
+        auto br_points = collectAllPoints(current->br_child_.get());
+        result.insert(result.end(), tl_points.begin(), tl_points.end());
+        result.insert(result.end(), tr_points.begin(), tr_points.end());
+        result.insert(result.end(), bl_points.begin(), bl_points.end());
+        result.insert(result.end(), br_points.begin(), br_points.end());
+    }
+    return result;
+}
+
+template <typename OBJECT_NAME, typename PointType, typename BoundType>
+std::vector<OBJECT_NAME*> QuadTree<OBJECT_NAME, PointType, BoundType>::findNeighbors(QuadTreeNode<OBJECT_NAME, PointType, BoundType>* current, BoundType rect) {
+
+   std::cout<<"rect = "<<rect<<"\n";
+
+    if(current == nullptr)
+        return {};
+
+    if(rect.wholyContains(current->boundry_)) {
+        return collectAllPoints(current);
+    }
+
+
+    if(current->isLeaf_) {
+        std::vector<OBJECT_NAME*> res;
+        if (rect.intersects(current->boundry_)) {
+            for(auto &point: current->points_) {
+                if(rect.contains(position_getter_(*point)))
+                    res.push_back(point);
+            }
+        }
+        return res;
+    }  else {
+
+        // search only in childs that has a part of this rect in it;
+        
+        // i think i can search specifically, here, i mean rather than checking for all childs,
+        // i can decide to check on some i guess?
+
+        // or like more educated guesses to ignore one child, based on rect and result of another child;
+
+        std::vector<OBJECT_NAME*> total;
+        auto collectFromChild = [&](auto child){
+            if(partInChild(child, rect)) {
+                auto childResult = findNeighbors(child, rect);
+                total.insert(total.end(), childResult.begin(), childResult.end());
+            }
+        };
+
+        collectFromChild(current->tl_child_.get());
+        collectFromChild(current->tr_child_.get());
+        collectFromChild(current->bl_child_.get());
+        collectFromChild(current->br_child_.get());
+
+        return total;
+    }
+}

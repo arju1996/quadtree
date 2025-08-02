@@ -128,8 +128,8 @@ void testClusteredPoints() {
     auto positionGetter = [](const TestObject& obj) { return obj.position; };
     
     Rectangle boundary(Point(0, 0), Point(100, 100));
-    // auto tree = quadtree.BuildTree({}, positionGetter, boundary, 2, 3);
-    auto tree = quadtree.BuildTree({}, positionGetter, boundary, 7, 3);
+    auto tree = quadtree.BuildTree({}, positionGetter, boundary, 2, 3);
+    // auto tree = quadtree.BuildTree({}, positionGetter, boundary, 7, 3);
     
     // Insert many objects in same area
     std::vector<TestObject> objects;

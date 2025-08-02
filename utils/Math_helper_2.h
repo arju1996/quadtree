@@ -36,6 +36,10 @@ namespace Math {
             return {static_cast<int>(x/div), static_cast<int>(y/div)};
         }
         
+        bool operator==(const Point2i& other) const {
+            return x == other.x && y == other.y;
+        }
+        
         friend std::ostream& operator<<(std::ostream& os, const Point2i& point) {
         os << "(" << point.x << ", " << point.y << ")";
         return os;
@@ -58,10 +62,56 @@ namespace Math {
         }
 
         bool contains(Point2i point) {
+
+        /*
+            // 🚨 Debug sanity checks: verify tl and br corners are normalized correctly
+            int min_x = std::min(tl.x, br.x);
+            int max_x = std::max(tl.x, br.x);
+            int min_y = std::min(tl.y, br.y);
+            int max_y = std::max(tl.y, br.y);
+            bool tl_correct = (tl.x == min_x) && (tl.y == min_y);
+            bool br_correct = (br.x == max_x) && (br.y == max_y);
+
+            if (!tl_correct || !br_correct) {
+                std::cerr << "Error: Recti is not normalized.\n"
+                        << "  tl = (" << tl.x << ", " << tl.y << "), expected (" << min_x << ", " << min_y << ")\n"
+                        << "  br = (" << br.x << ", " << br.y << "), expected (" << max_x << ", " << max_y << ")\n";
+                throw std::logic_error("Recti is not normalized (tl must be top-left, br must be bottom-right)");
+            }
+        */
+
             if((point.x >= tl.x && point.x <= br.x)
-                && (point.x >= tl.x && point.x <= br.x)) {
+                && (point.y >= tl.y && point.y <= br.y)) {
                     return true;
             } else return false;
+        }
+
+        bool wholyContains(Recti rect) {
+            if(
+                contains(rect.tl) && contains(rect.br)
+            )
+            return true;
+            else return false;
+        }
+
+        bool contains(Recti rect) {            
+            auto tr = rect.tl;
+            auto bl = rect.br;
+            tr.x = rect.br.x;
+            bl.x = rect.tl.x;
+            
+            // this is not contains, i think this is logically wrong
+            if(
+                contains(rect.tl) || contains(rect.br) ||
+                contains(tr) || contains(bl)
+            )
+            return true;
+            else return false;
+        }
+
+        bool intersects(const Recti& other) const {
+            return !(br.x < other.tl.x || other.br.x < tl.x ||
+                    br.y < other.tl.y || other.br.y < tl.y);
         }
     };
     //
