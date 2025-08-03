@@ -1,7 +1,0 @@
-1.dynamic quadtree, to account for movement of items;
-ie whenever an object moves dont recreate the quatreee instead update the quadtree;
-
-2.https://www.youtube.com/watch?v=RR8hx05NOnA
-looks beautiful, just enjoy and see what means;
-
-3.
