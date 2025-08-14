@@ -42,6 +42,7 @@ public:
     std::vector<OBJECT_NAME*> findNeighbors(QuadTreeNode<OBJECT_NAME, PointType, BoundType>* root, BoundType point);
     void insert(std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>>& root, OBJECT_NAME* object);
     void remove(std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>>& root, OBJECT_NAME* object);
+    void cleanup(std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>>& root);
 
 private:
     PositionGetter position_getter_;
@@ -59,6 +60,9 @@ private:
     // for findNeighbors
     bool partInChild(const QuadTreeNode<OBJECT_NAME, PointType, BoundType>* current, BoundType rect) const;
     std::vector<OBJECT_NAME*> collectAllPoints(const QuadTreeNode<OBJECT_NAME, PointType, BoundType>* current) const;
+
+    // for cleanup
+    void cleanupFromTopToBottom(std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>>& root);
 };
 
 
@@ -297,11 +301,73 @@ void QuadTree<OBJECT_NAME, PointType, BoundType>::remove(std::unique_ptr<QuadTre
     auto loc = std::find(node->points_.begin(), node->points_.end(), object);
     if(loc != node->points_.end()) {
         node->points_.erase(loc);
-        std::cout<<"removed from quadtree "<<"\n";
+        // std::cout<<"removed from quadtree "<<"\n";
     }
 
     // mark the node for cleanup (ie collapse parents nodes if possible)
     node->needCleanup_ = true;
+    // insert this node to a vector that later should be visited to cleanup;
+}
+
+template <typename OBJECT_NAME, typename PointType, typename BoundType>
+void QuadTree<OBJECT_NAME, PointType, BoundType>::cleanup(std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>>& node) {
+    cleanupFromTopToBottom(node);
+}
+
+template <typename OBJECT_NAME, typename PointType, typename BoundType>
+void QuadTree<OBJECT_NAME, PointType, BoundType>::cleanupFromTopToBottom(std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>>& node) {
+    // std::cout<<"cleanup from quadtree "<<"\n";
+    bool strictCollapseWhenUnderCapacity = true;
+
+    if(!node || node->getisleaf())
+        return;
+    
+    cleanup(node->tl_child_);
+    cleanup(node->tr_child_);
+    cleanup(node->bl_child_);
+    cleanup(node->br_child_);
+
+    const auto &tl = node->getTLChild();
+    const auto &tr = node->getTRChild();
+    const auto &bl = node->getBLChild();
+    const auto &br = node->getBRChild();
+
+    bool allChildrensAreLeaf = 
+        tl && tl->getisleaf() &&
+        tr && tr->getisleaf() &&
+        bl && bl->getisleaf() &&
+        br && br->getisleaf();
+
+    if (!allChildrensAreLeaf)
+        return;
+    // all childs must exists
+
+    bool allLeafsAreEmpty =
+        tl->points_.empty() &&
+        tr->points_.empty() &&
+        bl->points_.empty() &&
+        br->points_.empty();
+
+    int total_points = tl->points_.size() + tr->points_.size() + bl->points_.size() + br->points_.size();
+    
+    bool canCollapseEmpty = allLeafsAreEmpty && !strictCollapseWhenUnderCapacity;
+    bool canCollpaseWithPoints = (total_points < capacity_) && strictCollapseWhenUnderCapacity;
+
+    if (canCollapseEmpty || canCollpaseWithPoints) {
+        if(canCollpaseWithPoints) {
+            // move points to parent and collapse;
+            node->points_.insert(node->points_.end(), tl->points_.begin(), tl->points_.end());
+            node->points_.insert(node->points_.end(), tr->points_.begin(), tr->points_.end());
+            node->points_.insert(node->points_.end(), bl->points_.begin(), bl->points_.end());
+            node->points_.insert(node->points_.end(), br->points_.begin(), br->points_.end());
+        }
+        // and childs should have no data now;
+        node->tl_child_.reset();
+        node->tr_child_.reset();
+        node->bl_child_.reset();
+        node->br_child_.reset();
+        node->isLeaf_ = true;
+    }
 }
 
 template <typename OBJECT_NAME, typename PointType, typename BoundType>
@@ -443,7 +509,7 @@ std::vector<OBJECT_NAME*> QuadTree<OBJECT_NAME, PointType, BoundType>::collectAl
 template <typename OBJECT_NAME, typename PointType, typename BoundType>
 std::vector<OBJECT_NAME*> QuadTree<OBJECT_NAME, PointType, BoundType>::findNeighbors(QuadTreeNode<OBJECT_NAME, PointType, BoundType>* current, BoundType rect) {
 
-   std::cout<<"rect = "<<rect<<"\n";
+//    std::cout<<"rect = "<<rect<<"\n";
 
     if(current == nullptr)
         return {};

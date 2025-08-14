@@ -38,6 +38,12 @@ void populate(std::vector<Boid*> &boids,  Math::Recti boundry, int count) {
     }
 }
 
+Math::Point2i randomJitter(int max_delta = 2) {
+    static std::mt19937 rng(std::random_device{}());
+    std::uniform_int_distribution<int> dist(-max_delta, max_delta);
+    return { dist(rng), dist(rng) };
+}
+
 int main() {
     std::vector<Boid*> data;
     Math::Recti boundry;
@@ -76,6 +82,8 @@ int main() {
     Math::Recti search_area{offset1, offset2}; 
     bool removed = false;
     //
+
+    int i = 0;
     while(!WindowShouldClose()) {
         // data.clear();
 
@@ -153,6 +161,25 @@ int main() {
         DrawText(fps_string.c_str(), 20, 20, 30, LIGHTGRAY);
 
         EndDrawing();
+
+        /*
+        for (Boid* boid : data) {
+            // Remove from QuadTree first
+            quadtree.remove(root, boid);
+
+            // Update position with a small random offset
+            boid->position = boid->position + randomJitter();
+
+            // Re-insert into QuadTree
+            quadtree.insert(root, boid);
+        }
+        */
+
+        if(i % 100 == 0) {
+            quadtree.cleanup(root);
+        }
+        ++i;
+        std::cout<<i<<"\n";
     }
 
     // Cleanup
