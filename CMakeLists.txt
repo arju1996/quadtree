@@ -5,30 +5,6 @@ project(quad)
 set(CMAKE_CXX_STANDARD 20)
 
 
-set(RAY_LIB_FOLDER "/home/sreelatha/learn/frameworks/raylib/install/")
-
-set(RAY_LIB_WIN_FOLDER "F:\\installed_tools\\raylib\\raylib\\install_debug")
-
-add_library(raylib STATIC IMPORTED)
-set_target_properties(raylib
-PROPERTIES IMPORTED_LOCATION
-${RAY_LIB_WIN_FOLDER}/lib/raylib.lib
-)
-include_directories(${RAY_LIB_WIN_FOLDER}/include)
-
-set(RAY_LIB_GUI_FOLDER "/home/sreelatha/learn/frameworks/raygui/src/")
-set(RAY_LIB_GUI_WIN_FOLDER "F:/installed_tools/raylib/raygui/src")
-
-include_directories(${RAY_LIB_GUI_WIN_FOLDER})
-
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/utils)
-
-add_executable(quad 
-        # main.cc
-        src/main_ui.cc
-        )
-
 add_executable(quad_test
         tests/test_helper.h
         tests/test_quadtree_creation.cpp
@@ -37,5 +13,24 @@ add_executable(quad_test
         tests/test_quadtree_main.cpp
 )
 
-target_link_libraries(quad raylib )
-target_link_libraries(quad winmm.lib)
+target_include_directories(quad_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+
+option(BUILD_UI "Build the raylib UI executable" ON)
+if(BUILD_UI)
+        add_executable(quad 
+                # main.cc
+                src/main_ui.cc
+                )
+
+        set(RAY_LIB_GUI_WIN_FOLDER "F:/installed_tools/raylib/raygui/src" CACHE PATH "Path to raygui")
+        find_package(raylib CONFIG REQUIRED)
+
+
+        target_include_directories(quad PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+        target_include_directories(quad PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/utils)
+        target_include_directories(quad PRIVATE ${RAY_LIB_GUI_WIN_FOLDER})
+
+        target_link_libraries(quad raylib )
+        target_link_libraries(quad winmm.lib)
+endif()
