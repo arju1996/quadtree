@@ -1,5 +1,5 @@
 # cmake_minimum_required(VERSION 3.29)
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 4.0)
 project(quad)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD 20)
 
 set(RAY_LIB_FOLDER "/home/sreelatha/learn/frameworks/raylib/install/")
 
-set(RAY_LIB_WIN_FOLDER "H:\\test\\raylib\\raylib\\out\\install\\x64-Debug")
+set(RAY_LIB_WIN_FOLDER "F:\\installed_tools\\raylib\\raylib\\install_debug")
 
 add_library(raylib STATIC IMPORTED)
 set_target_properties(raylib
@@ -17,7 +17,7 @@ ${RAY_LIB_WIN_FOLDER}/lib/raylib.lib
 include_directories(${RAY_LIB_WIN_FOLDER}/include)
 
 set(RAY_LIB_GUI_FOLDER "/home/sreelatha/learn/frameworks/raygui/src/")
-set(RAY_LIB_GUI_WIN_FOLDER "H:/test/raylib/raygui/src")
+set(RAY_LIB_GUI_WIN_FOLDER "F:/installed_tools/raylib/raygui/src")
 
 include_directories(${RAY_LIB_GUI_WIN_FOLDER})
 
