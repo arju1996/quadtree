@@ -50,7 +50,8 @@ void testRemoveFromLeafNode() {
     auto positionGetter = [](const TestObject& obj) { return obj.position; };
     
     Rectangle boundary(Point(0, 0), Point(100, 100));
-    auto tree = quadtree.BuildTree({}, positionGetter, boundary, 5, 3);
+    QuadTreeNode<TestObject, Point, Rectangle>* parent = nullptr;
+    auto tree = quadtree.BuildTree(parent, {}, positionGetter, boundary, 5, 3);
     
     // Insert objects
     TestObject obj1(10, 10, 1);
@@ -82,7 +83,8 @@ void testRemoveLastObjectFromLeaf() {
     auto positionGetter = [](const TestObject& obj) { return obj.position; };
     
     Rectangle boundary(Point(0, 0), Point(100, 100));
-    auto tree = quadtree.BuildTree({}, positionGetter, boundary, 5, 3);
+    QuadTreeNode<TestObject, Point, Rectangle>* parent = nullptr;
+    auto tree = quadtree.BuildTree(parent, {}, positionGetter, boundary, 5, 3);
     
     // Insert single object
     TestObject obj1(10, 10, 1);
@@ -107,7 +109,8 @@ void testRemoveFromSubdividedTree() {
     auto positionGetter = [](const TestObject& obj) { return obj.position; };
     
     Rectangle boundary(Point(0, 0), Point(100, 100));
-    auto tree = quadtree.BuildTree({}, positionGetter, boundary, 2, 3);
+    QuadTreeNode<TestObject, Point, Rectangle>* parent = nullptr;
+    auto tree = quadtree.BuildTree(parent, {}, positionGetter, boundary, 2, 3);
     
     // Insert objects to trigger subdivision
     TestObject obj1(25, 25, 1);  // Top-left
@@ -146,7 +149,8 @@ void testRemoveNonExistentObject() {
     auto positionGetter = [](const TestObject& obj) { return obj.position; };
     
     Rectangle boundary(Point(0, 0), Point(100, 100));
-    auto tree = quadtree.BuildTree({}, positionGetter, boundary, 5, 3);
+    QuadTreeNode<TestObject, Point, Rectangle>* parent = nullptr;
+    auto tree = quadtree.BuildTree(parent, {}, positionGetter, boundary, 5, 3);
     
     // Insert objects
     TestObject obj1(10, 10, 1);
@@ -176,7 +180,9 @@ void testRemoveFromEmptyTree() {
     auto positionGetter = [](const TestObject& obj) { return obj.position; };
     
     Rectangle boundary(Point(0, 0), Point(100, 100));
-    auto tree = quadtree.BuildTree({}, positionGetter, boundary, 5, 3);
+
+    QuadTreeNode<TestObject, Point, Rectangle>* parent = nullptr;
+    auto tree = quadtree.BuildTree(parent, {}, positionGetter, boundary, 5, 3);
     
     TestObject obj1(10, 10, 1);
     
@@ -198,7 +204,8 @@ void testRemoveMultipleObjects() {
     auto positionGetter = [](const TestObject& obj) { return obj.position; };
     
     Rectangle boundary(Point(0, 0), Point(100, 100));
-    auto tree = quadtree.BuildTree({}, positionGetter, boundary, 3, 3);
+    QuadTreeNode<TestObject, Point, Rectangle>* parent = nullptr;
+    auto tree = quadtree.BuildTree(parent, {}, positionGetter, boundary, 3, 3);
     
     // Insert multiple objects
     std::vector<TestObject> objects;
@@ -236,7 +243,8 @@ void testRemoveFromDeepTree() {
     auto positionGetter = [](const TestObject& obj) { return obj.position; };
     
     Rectangle boundary(Point(0, 0), Point(100, 100));
-    auto tree = quadtree.BuildTree({}, positionGetter, boundary, 1, 5); // Small capacity, deep tree
+    QuadTreeNode<TestObject, Point, Rectangle>* parent = nullptr;
+    auto tree = quadtree.BuildTree(parent, {}, positionGetter, boundary, 1, 5); // Small capacity, deep tree
     
     // Insert clustered objects to create deep nesting
     std::vector<TestObject> objects;
@@ -266,7 +274,8 @@ void testRemoveAllObjectsSequentially() {
     auto positionGetter = [](const TestObject& obj) { return obj.position; };
     
     Rectangle boundary(Point(0, 0), Point(100, 100));
-    auto tree = quadtree.BuildTree({}, positionGetter, boundary, 2, 3);
+    QuadTreeNode<TestObject, Point, Rectangle>* parent = nullptr;
+    auto tree = quadtree.BuildTree(parent, {}, positionGetter, boundary, 2, 3);
     
     // Insert objects
     std::vector<TestObject> objects;

@@ -53,7 +53,8 @@ void testFindNeighborsInLeafNode() {
     auto positionGetter = [](const TestObject& obj) { return obj.position; };
     
     Rectangle boundary(Point(0, 0), Point(100, 100));
-    auto tree = quadtree.BuildTree({}, positionGetter, boundary, 5, 3);
+    QuadTreeNode<TestObject, Point, Rectangle>* parent = nullptr;
+    auto tree = quadtree.BuildTree(parent, {}, positionGetter, boundary, 5, 3);
     
     // Insert objects in same leaf
     TestObject obj1(10, 10, 1);
@@ -86,7 +87,8 @@ void testFindNeighborsInSubdividedTree() {
     auto positionGetter = [](const TestObject& obj) { return obj.position; };
     
     Rectangle boundary(Point(0, 0), Point(100, 100));
-    auto tree = quadtree.BuildTree({}, positionGetter, boundary, 2, 3);
+    QuadTreeNode<TestObject, Point, Rectangle>* parent = nullptr;
+    auto tree = quadtree.BuildTree(parent, {}, positionGetter, boundary, 2, 3);
     
     // Insert objects to trigger subdivision
     TestObject obj1(25, 25, 1);  // Top-left
@@ -122,7 +124,8 @@ void testFindNeighborsAtBoundary() {
     auto positionGetter = [](const TestObject& obj) { return obj.position; };
     
     Rectangle boundary(Point(0, 0), Point(100, 100));
-    auto tree = quadtree.BuildTree({}, positionGetter, boundary, 2, 3);
+    QuadTreeNode<TestObject, Point, Rectangle>* parent = nullptr;
+    auto tree = quadtree.BuildTree(parent, {}, positionGetter, boundary, 2, 3);
     
     // Insert objects near the center (boundary of quadrants)
     TestObject obj1(49, 49, 1);  // Top-left, near center
@@ -157,7 +160,8 @@ void testFindNeighborsEmptyTree() {
     auto positionGetter = [](const TestObject& obj) { return obj.position; };
     
     Rectangle boundary(Point(0, 0), Point(100, 100));
-    auto tree = quadtree.BuildTree({}, positionGetter, boundary, 5, 3);
+    QuadTreeNode<TestObject, Point, Rectangle>* parent = nullptr;
+    auto tree = quadtree.BuildTree(parent, {}, positionGetter, boundary, 5, 3);
     
     // Query in empty tree
     Point queryPoint(50, 50);
@@ -175,7 +179,8 @@ void testFindNeighborsOutsideBoundary() {
     auto positionGetter = [](const TestObject& obj) { return obj.position; };
     
     Rectangle boundary(Point(0, 0), Point(100, 100));
-    auto tree = quadtree.BuildTree({}, positionGetter, boundary, 5, 3);
+    QuadTreeNode<TestObject, Point, Rectangle>* parent = nullptr;
+    auto tree = quadtree.BuildTree(parent, {}, positionGetter, boundary, 5, 3);
     
     // Insert objects within boundary
     TestObject obj1(10, 10, 1);
@@ -201,7 +206,8 @@ void testFindNeighborsWithClusteredObjects() {
     auto positionGetter = [](const TestObject& obj) { return obj.position; };
     
     Rectangle boundary(Point(0, 0), Point(100, 100));
-    auto tree = quadtree.BuildTree({}, positionGetter, boundary, 3, 3);
+    QuadTreeNode<TestObject, Point, Rectangle>* parent = nullptr;
+    auto tree = quadtree.BuildTree(parent, {}, positionGetter, boundary, 3, 3);
     
     // Insert clustered objects
     std::vector<TestObject> cluster1;
@@ -240,7 +246,8 @@ void testFindNeighborsAtCorners() {
     auto positionGetter = [](const TestObject& obj) { return obj.position; };
     
     Rectangle boundary(Point(0, 0), Point(100, 100));
-    auto tree = quadtree.BuildTree({}, positionGetter, boundary, 2, 3);
+    QuadTreeNode<TestObject, Point, Rectangle>* parent = nullptr;
+    auto tree = quadtree.BuildTree(parent, {}, positionGetter, boundary, 2, 3);
     
     // Insert objects at corners
     TestObject obj1(0, 0, 1);      // Top-left corner
@@ -272,7 +279,8 @@ void testFindNeighborsMultipleQueries() {
     auto positionGetter = [](const TestObject& obj) { return obj.position; };
     
     Rectangle boundary(Point(0, 0), Point(100, 100));
-    auto tree = quadtree.BuildTree({}, positionGetter, boundary, 2, 3);
+    QuadTreeNode<TestObject, Point, Rectangle>* parent = nullptr;
+    auto tree = quadtree.BuildTree(parent, {}, positionGetter, boundary, 2, 3);
     
     // Insert objects in different quadrants
     TestObject obj1(25, 25, 1);  // Top-left
@@ -328,7 +336,8 @@ void testFindNeighborsDeepTree() {
     auto positionGetter = [](const TestObject& obj) { return obj.position; };
     
     Rectangle boundary(Point(0, 0), Point(100, 100));
-    auto tree = quadtree.BuildTree({}, positionGetter, boundary, 1, 5); // Small capacity, deep tree
+    QuadTreeNode<TestObject, Point, Rectangle>* parent = nullptr;
+    auto tree = quadtree.BuildTree(parent, {}, positionGetter, boundary, 1, 5); // Small capacity, deep tree
     
     // Insert many objects in a small area to create deep nesting
     std::vector<TestObject> objects;
@@ -366,7 +375,8 @@ void testFindNeighborsPerformance() {
     auto positionGetter = [](const TestObject& obj) { return obj.position; };
     
     Rectangle boundary(Point(0, 0), Point(1000, 1000));
-    auto tree = quadtree.BuildTree({}, positionGetter, boundary, 10, 4);
+    QuadTreeNode<TestObject, Point, Rectangle>* parent = nullptr;
+    auto tree = quadtree.BuildTree(parent, {}, positionGetter, boundary, 10, 4);
     
     // Insert many objects across the space
     std::vector<TestObject> objects;
@@ -410,7 +420,8 @@ void testFindNeighborsConsistency() {
     auto positionGetter = [](const TestObject& obj) { return obj.position; };
     
     Rectangle boundary(Point(0, 0), Point(100, 100));
-    auto tree = quadtree.BuildTree({}, positionGetter, boundary, 3, 3);
+    QuadTreeNode<TestObject, Point, Rectangle>* parent = nullptr;
+    auto tree = quadtree.BuildTree(parent, {}, positionGetter, boundary, 3, 3);
     
     // Insert objects
     std::vector<TestObject> objects;

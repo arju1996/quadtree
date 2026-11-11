@@ -4,6 +4,7 @@
 #include <functional>
 #include <memory>
 #include <vector>
+#include <unordered_set>
 
 template <typename OBJECT_NAME, typename PointType, typename BoundType>
 class QuadTree;
@@ -31,13 +32,14 @@ private:
     bool needCleanup_;
     std::vector<OBJECT_NAME*> points_;
     std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>> tl_child_, tr_child_, bl_child_, br_child_;
+    QuadTreeNode<OBJECT_NAME, PointType, BoundType>* parent_;
 };
 
 template <typename OBJECT_NAME, typename PointType, typename BoundType>
 class QuadTree {
 public:
     using PositionGetter = std::function<PointType(const OBJECT_NAME&)>;
-    std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>> BuildTree(std::vector<OBJECT_NAME*> points, PositionGetter position_getter, BoundType boundry, int capacity, int max_depth, int depth = 0);
+    std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>> BuildTree(QuadTreeNode<OBJECT_NAME, PointType, BoundType> *parent, std::vector<OBJECT_NAME*> points, PositionGetter position_getter, BoundType boundry, int capacity, int max_depth, int depth = 0);
     std::vector<OBJECT_NAME*> findNeighbors(QuadTreeNode<OBJECT_NAME, PointType, BoundType>* root, PointType point);
     std::vector<OBJECT_NAME*> findNeighbors(QuadTreeNode<OBJECT_NAME, PointType, BoundType>* root, BoundType point);
     void insert(std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>>& root, OBJECT_NAME* object);
@@ -48,6 +50,7 @@ private:
     PositionGetter position_getter_;
     int capacity_;
     int max_depth_;
+    std::unordered_set<QuadTreeNode<OBJECT_NAME, PointType, BoundType>*> faultyList;
 
     // for remove
     bool exists(const std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>>& root, const OBJECT_NAME* object) const;
@@ -55,7 +58,7 @@ private:
 
     // for insert
     void subdivide(std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>>& current);
-    void initializeChild(std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>>& child, BoundType boundry, int depth, std::vector<OBJECT_NAME*> points = {});
+    void initializeChild(std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>>& child, QuadTreeNode<OBJECT_NAME, PointType, BoundType>* parent, BoundType boundry, int depth, std::vector<OBJECT_NAME*> points = {});
 
     // for findNeighbors
     bool partInChild(const QuadTreeNode<OBJECT_NAME, PointType, BoundType>* current, BoundType rect) const;
@@ -63,14 +66,38 @@ private:
 
     // for cleanup
     void cleanupFromTopToBottom(std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>>& root);
+    void cleanupFromFaultyList3(std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>>& root);
+    void ownChildsPointsAndDestroyChild(QuadTreeNode<OBJECT_NAME, PointType, BoundType>* parent);
+    bool canCollapse(const QuadTreeNode<OBJECT_NAME, PointType, BoundType>* parent) const;
+    // for debug
+    const std::unordered_set<QuadTreeNode<OBJECT_NAME, PointType, BoundType>*>& getFaultyList() const { return faultyList; }
 };
 
 
+template <typename OBJECT_NAME, typename PointType, typename BoundType>
+bool QuadTree<OBJECT_NAME, PointType, BoundType>::canCollapse(
+        const QuadTreeNode<OBJECT_NAME, PointType, BoundType>* parent) const {
+    if (!parent || parent->isLeaf_) return false;
+
+    const QuadTreeNode<OBJECT_NAME, PointType, BoundType>* children[4] = {
+        parent->tl_child_.get(), parent->tr_child_.get(),
+        parent->bl_child_.get(), parent->br_child_.get()
+    };
+
+    std::size_t total = 0;
+    for (const auto* child : children) {
+        // an internal child's points_ is empty, so its size says nothing
+        if (!child || !child->isLeaf_) return false;
+        total += child->points_.size();
+    }
+    return total < static_cast<std::size_t>(capacity_);
+}
 
 //implementations
 template <typename OBJECT_NAME, typename PointType, typename BoundType>
 void QuadTree<OBJECT_NAME, PointType, BoundType>::initializeChild(
             std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>>& child,
+            QuadTreeNode<OBJECT_NAME, PointType, BoundType>* parent,
             BoundType boundry,
             int depth,
             std::vector<OBJECT_NAME*> points) {
@@ -79,6 +106,7 @@ void QuadTree<OBJECT_NAME, PointType, BoundType>::initializeChild(
     child->points_ = points;
     child->isLeaf_ = true;
     child->needCleanup_ = false;
+    child->parent_ = parent;
 }
 
 template <typename OBJECT_NAME, typename PointType, typename BoundType>
@@ -130,10 +158,10 @@ void QuadTree<OBJECT_NAME, PointType, BoundType>::subdivide(std::unique_ptr<Quad
     childs[2] = std::make_unique<QuadTreeNode<OBJECT_NAME, PointType, BoundType>>();
     childs[3] = std::make_unique<QuadTreeNode<OBJECT_NAME, PointType, BoundType>>();
 
-    initializeChild(childs[0], tl, current->depth_ + 1, points_tl);
-    initializeChild(childs[1], tr, current->depth_ + 1, points_tr);
-    initializeChild(childs[2], bl, current->depth_ + 1, points_bl);
-    initializeChild(childs[3], br, current->depth_ + 1, points_br);
+    initializeChild(childs[0], current.get(), tl, current->depth_ + 1, points_tl);
+    initializeChild(childs[1], current.get(), tr, current->depth_ + 1, points_tr);
+    initializeChild(childs[2], current.get(), bl, current->depth_ + 1, points_bl);
+    initializeChild(childs[3], current.get(), br, current->depth_ + 1, points_br);
 
     current->tl_child_ = std::move(childs[0]);
     current->tr_child_ = std::move(childs[1]);
@@ -297,6 +325,9 @@ void QuadTree<OBJECT_NAME, PointType, BoundType>::remove(std::unique_ptr<QuadTre
     auto* node = findnode_thisitem_existing(root, object);
     if(!node)
         return;
+
+    // std::cout << "Found node: " << node << std::endl;
+    // std::cout << "Node parent: " << node->parent_ << std::endl;
     
     auto loc = std::find(node->points_.begin(), node->points_.end(), object);
     if(loc != node->points_.end()) {
@@ -306,12 +337,70 @@ void QuadTree<OBJECT_NAME, PointType, BoundType>::remove(std::unique_ptr<QuadTre
 
     // mark the node for cleanup (ie collapse parents nodes if possible)
     node->needCleanup_ = true;
-    // insert this node to a vector that later should be visited to cleanup;
+    // insert this node to a vector that later should be visited to cleanup;    
+    faultyList.insert(node);
 }
 
 template <typename OBJECT_NAME, typename PointType, typename BoundType>
 void QuadTree<OBJECT_NAME, PointType, BoundType>::cleanup(std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>>& node) {
-    cleanupFromTopToBottom(node);
+    // cleanupFromTopToBottom(node);
+
+    if(faultyList.empty())
+        return;
+    cleanupFromFaultyList3(node);
+}
+
+template <typename OBJECT_NAME, typename PointType, typename BoundType>
+void QuadTree<OBJECT_NAME, PointType, BoundType>::ownChildsPointsAndDestroyChild(
+    QuadTreeNode<OBJECT_NAME, PointType, BoundType>* parent)
+{
+    if (!parent) return;
+
+    std::vector<std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>>> children;
+
+    if (parent->tl_child_) children.push_back(std::move(parent->tl_child_));
+    if (parent->tr_child_) children.push_back(std::move(parent->tr_child_));
+    if (parent->bl_child_) children.push_back(std::move(parent->bl_child_));
+    if (parent->br_child_) children.push_back(std::move(parent->br_child_));
+
+    for (auto &child : children) {
+        if (child) {
+            parent->points_.insert(
+                parent->points_.end(),
+                std::make_move_iterator(child->points_.begin()),
+                std::make_move_iterator(child->points_.end())
+            );
+        }
+    }
+
+    for (auto &child : children) {
+        if (child) {
+            faultyList.erase(child.get());
+        }
+    }
+
+    // childs will get destroyed (because they are unique_ptrs)
+
+    parent->isLeaf_ = true;
+}
+
+
+
+
+template <typename OBJECT_NAME, typename PointType, typename BoundType>
+void QuadTree<OBJECT_NAME, PointType, BoundType>::cleanupFromFaultyList3(std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>>& node) {
+    while (!faultyList.empty()) {
+        auto it = faultyList.begin();
+        auto* leaf = *it;
+        faultyList.erase(it);
+
+        auto* parent = leaf->parent_;
+        while (parent && canCollapse(parent)) {
+            auto* grandparent = parent->parent_;
+            ownChildsPointsAndDestroyChild(parent);
+            parent = grandparent;   // looping
+        }
+    }
 }
 
 template <typename OBJECT_NAME, typename PointType, typename BoundType>
@@ -322,10 +411,10 @@ void QuadTree<OBJECT_NAME, PointType, BoundType>::cleanupFromTopToBottom(std::un
     if(!node || node->getisleaf())
         return;
     
-    cleanup(node->tl_child_);
-    cleanup(node->tr_child_);
-    cleanup(node->bl_child_);
-    cleanup(node->br_child_);
+    cleanupFromTopToBottom(node->tl_child_);
+    cleanupFromTopToBottom(node->tr_child_);
+    cleanupFromTopToBottom(node->bl_child_);
+    cleanupFromTopToBottom(node->br_child_);
 
     const auto &tl = node->getTLChild();
     const auto &tr = node->getTRChild();
@@ -371,7 +460,8 @@ void QuadTree<OBJECT_NAME, PointType, BoundType>::cleanupFromTopToBottom(std::un
 }
 
 template <typename OBJECT_NAME, typename PointType, typename BoundType>
-std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>> QuadTree<OBJECT_NAME, PointType, BoundType>::BuildTree(std::vector<OBJECT_NAME*> points,
+std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>> QuadTree<OBJECT_NAME, PointType, BoundType>::BuildTree(QuadTreeNode<OBJECT_NAME, PointType, BoundType>* parent,
+        std::vector<OBJECT_NAME*> points,
         PositionGetter position_getter,
         BoundType boundry,
         int capacity,
@@ -391,6 +481,7 @@ std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>> QuadTree<OBJECT
     //edge case
     auto current = std::make_unique<QuadTreeNode<OBJECT_NAME, PointType, BoundType>>();
 
+    current->parent_ = parent;
     if(points.size() <= capacity || depth >= max_depth) {
         current->boundry_ = boundry;
         current->depth_ = depth;
@@ -441,10 +532,10 @@ std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>> QuadTree<OBJECT
     }
     
     // first find the data that will come in tl_child;
-    current->tl_child_ = BuildTree(points_tl, position_getter, tl, capacity, max_depth, depth + 1);
-    current->tr_child_ = BuildTree(points_tr, position_getter, tr, capacity, max_depth, depth + 1);
-    current->bl_child_ = BuildTree(points_bl, position_getter, bl, capacity, max_depth, depth + 1);
-    current->br_child_ = BuildTree(points_br, position_getter, br, capacity, max_depth, depth + 1);
+    current->tl_child_ = BuildTree(current.get(), points_tl, position_getter, tl, capacity, max_depth, depth + 1);
+    current->tr_child_ = BuildTree(current.get(), points_tr, position_getter, tr, capacity, max_depth, depth + 1);
+    current->bl_child_ = BuildTree(current.get(), points_bl, position_getter, bl, capacity, max_depth, depth + 1);
+    current->br_child_ = BuildTree(current.get(), points_br, position_getter, br, capacity, max_depth, depth + 1);
     current->boundry_ = boundry;
     current->depth_ = depth;
     current->isLeaf_ = false;

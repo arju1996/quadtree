@@ -65,8 +65,9 @@ int main() {
     QuadTree<Boid, Math::Point2i, Math::Recti> quadtree;
     std::unique_ptr<QuadTreeNode<Boid, Math::Point2i, Math::Recti>> root;
 
+    QuadTreeNode<Boid, Math::Point2i, Math::Recti>* parent = nullptr;
     // create
-    root = quadtree.BuildTree(data, position_getter, {{0,0}, {WINDOW_WIDTH, WINDOW_HEIGHT}}, capacity, max_depth, 0);
+    root = quadtree.BuildTree(parent, data, position_getter, {{0,0}, {WINDOW_WIDTH, WINDOW_HEIGHT}}, capacity, max_depth, 0);
 
     // search
     // Boid search_item_boid = *data[12];

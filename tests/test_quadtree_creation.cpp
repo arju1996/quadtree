@@ -19,7 +19,8 @@ void testBasicInsertion() {
     
     // Create tree with capacity 2
     Rectangle boundary(Point(0, 0), Point(100, 100));
-    auto tree = quadtree.BuildTree({}, positionGetter, boundary, 2, 3);
+    QuadTreeNode<TestObject, Point, Rectangle>* parent = nullptr;
+    auto tree = quadtree.BuildTree(parent, {}, positionGetter, boundary, 2, 3);
     
     // Test 1: Insert single object
     TestObject obj1(10, 10, 1);
@@ -45,7 +46,8 @@ void testSubdivision() {
     auto positionGetter = [](const TestObject& obj) { return obj.position; };
     
     Rectangle boundary(Point(0, 0), Point(100, 100));
-    auto tree = quadtree.BuildTree({}, positionGetter, boundary, 2, 3);
+    QuadTreeNode<TestObject, Point, Rectangle>* parent = nullptr;
+    auto tree = quadtree.BuildTree(parent, {}, positionGetter, boundary, 2, 3);
     
     // Insert objects to trigger subdivision
     TestObject obj1(10, 10, 1);  // Top-left
@@ -72,7 +74,8 @@ void testDistributedInsertion() {
     auto positionGetter = [](const TestObject& obj) { return obj.position; };
     
     Rectangle boundary(Point(0, 0), Point(100, 100));
-    auto tree = quadtree.BuildTree({}, positionGetter, boundary, 2, 3);
+    QuadTreeNode<TestObject, Point, Rectangle>* parent = nullptr;
+    auto tree = quadtree.BuildTree(parent, {}, positionGetter, boundary, 2, 3);
     
     // Insert objects in different quadrants
     TestObject obj1(25, 25, 1);  // Top-left
@@ -106,7 +109,8 @@ void testClusteredPoints() {
     auto positionGetter = [](const TestObject& obj) { return obj.position; };
     
     Rectangle boundary(Point(0, 0), Point(100, 100));
-    auto tree = quadtree.BuildTree({}, positionGetter, boundary, 2, 3);
+    QuadTreeNode<TestObject, Point, Rectangle>* parent = nullptr;
+    auto tree = quadtree.BuildTree(parent, {}, positionGetter, boundary, 2, 3);
     // auto tree = quadtree.BuildTree({}, positionGetter, boundary, 7, 3);
     
     // Insert many objects in same area
@@ -132,7 +136,8 @@ void testEdgeCases() {
     auto positionGetter = [](const TestObject& obj) { return obj.position; };
     
     Rectangle boundary(Point(0, 0), Point(100, 100));
-    auto tree = quadtree.BuildTree({}, positionGetter, boundary, 2, 3);
+    QuadTreeNode<TestObject, Point, Rectangle>* parent = nullptr;
+    auto tree = quadtree.BuildTree(parent, {}, positionGetter, boundary, 2, 3);
     
     // Test boundary points
     TestObject obj1(0, 0, 1);    // Corner
