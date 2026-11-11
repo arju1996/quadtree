@@ -17,6 +17,20 @@ not yet completed: ie its an big task;
 random:
 *.parellelize things that can be, say like searching neighbors;
 
+
+===
+*.
+why QuadTree<OBJECT_NAME, PointType, BoundType>::remove should call both
+exists and
+findnode_thisitem_existing
+
+*.
+technically almost all the root in
+QuadTree should actually be named as current or node
+
+*.
+cleanupFromFaultyList3
+doesn't need node as argument
 ===
 ===
 ===

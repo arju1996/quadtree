@@ -63,6 +63,6 @@ if(QUAD_BUILD_UI)
                 # main.cc
                 src/main_ui.cc
                 )
-    target_include_directories(quad PRIVATE ${RAYGUI_INCLUDE_DIR})
+    target_include_directories(quad SYSTEM PRIVATE ${RAYGUI_INCLUDE_DIR})
     target_link_libraries(quad PRIVATE quadtree_core quad_warnings raylib)
 endif()

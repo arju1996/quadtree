@@ -19,9 +19,6 @@ class Boid {
     }
 };
 
-auto position_getter = [](const Boid& obj) -> Math::Point2i {
-    return obj.position;
-};
 
 Math::Point2i GenerateRandomVector2Positive(int yMax, int xMax) {
     std::random_device rd;
@@ -45,8 +42,13 @@ Math::Point2i randomJitter(int max_delta = 2) {
 }
 
 int main() {
+
+    auto position_getter = [](const Boid& obj) -> Math::Point2i {
+        return obj.position;
+    };
+
     std::vector<Boid*> data;
-    Math::Recti boundry;
+    // Math::Recti boundry;
     int capacity = 5;
     int max_depth = 8;
     int n = 5000;
@@ -54,7 +56,7 @@ int main() {
 
     const int WINDOW_WIDTH = 1200;
     const int WINDOW_HEIGHT = 1000;
-    const int CELL_SIZE = 40;
+    // const int CELL_SIZE = 40;
     int FPS = 30;
     
 
@@ -127,6 +129,11 @@ int main() {
             }
             std::cout<<"removed  "<<count<<" neighbours from data "<<"\n";
             removed = true;
+        }
+
+
+        if(IsMouseButtonPressed(MOUSE_BUTTON_SIDE)) {
+            std::cout<<"looks buggy, lets debug"<<"\n";
         }
 
 

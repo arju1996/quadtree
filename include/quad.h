@@ -35,6 +35,8 @@ private:
     QuadTreeNode<OBJECT_NAME, PointType, BoundType>* parent_;
 };
 
+enum class CleanupStrategy {FaultyList, Sweep};
+
 template <typename OBJECT_NAME, typename PointType, typename BoundType>
 class QuadTree {
 public:
@@ -51,9 +53,10 @@ private:
     int capacity_;
     int max_depth_;
     std::unordered_set<QuadTreeNode<OBJECT_NAME, PointType, BoundType>*> faultyList;
+    CleanupStrategy cleanupstrategy_ = CleanupStrategy::FaultyList;
 
     // for remove
-    bool exists(const std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>>& root, const OBJECT_NAME* object) const;
+    bool exists(const std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>>& current, const OBJECT_NAME* object) const;
     QuadTreeNode<OBJECT_NAME, PointType, BoundType>* findnode_thisitem_existing(const std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>>& root, const OBJECT_NAME* object);
 
     // for insert
@@ -66,9 +69,10 @@ private:
 
     // for cleanup
     void cleanupFromTopToBottom(std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>>& root);
-    void cleanupFromFaultyList3(std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>>& root);
+    void cleanupFromFaultyList3();
     void ownChildsPointsAndDestroyChild(QuadTreeNode<OBJECT_NAME, PointType, BoundType>* parent);
     bool canCollapse(const QuadTreeNode<OBJECT_NAME, PointType, BoundType>* parent) const;
+    void setCleanupStrategy(CleanupStrategy strategy) {cleanupstrategy_ = strategy;}
     // for debug
     const std::unordered_set<QuadTreeNode<OBJECT_NAME, PointType, BoundType>*>& getFaultyList() const { return faultyList; }
 };
@@ -231,74 +235,74 @@ void QuadTree<OBJECT_NAME, PointType, BoundType>::insert(std::unique_ptr<QuadTre
 }
 
 template <typename OBJECT_NAME, typename PointType, typename BoundType>
-bool QuadTree<OBJECT_NAME, PointType, BoundType>::exists(const std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>>& root, const OBJECT_NAME* object) const {
+bool QuadTree<OBJECT_NAME, PointType, BoundType>::exists(const std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>>& current, const OBJECT_NAME* object) const {
     
     if (!object) throw std::runtime_error("object is null");
-    if (!root) throw std::runtime_error("root is null");
+    if (!current) throw std::runtime_error("current is null");
     if (!position_getter_) throw std::runtime_error("position functor is null");
     // i could seperate the gaurds before the recursion
 
     const PointType& item = position_getter_(*object);
     
-    BoundType boundry = root->getBoundry();
+    BoundType boundry = current->getBoundry();
     PointType mid = (boundry.tl + boundry.br) / 2.0f;
 
-    if(root->getisleaf()) {
-        auto found = std::find(root->points_.begin(), root->points_.end(), object);
-        if (found != root->points_.end())
+    if(current->getisleaf()) {
+        auto found = std::find(current->points_.begin(), current->points_.end(), object);
+        if (found != current->points_.end())
             return true;
         else
             return false;
     } else {
-        PointType mid = (root->boundry_.tl + root->boundry_.br) / 2.0f;
+        mid = (current->boundry_.tl + current->boundry_.br) / 2.0f;
         if(item.x < mid.x) {
             if(item.y < mid.y) {
-                return exists(root->tl_child_, object);
+                return exists(current->tl_child_, object);
             } else {
-                return exists(root->bl_child_, object);
+                return exists(current->bl_child_, object);
             }
         } else {
             if(item.y < mid.y) {
-                return exists(root->tr_child_, object);
+                return exists(current->tr_child_, object);
             } else {
-                return exists(root->br_child_, object);
+                return exists(current->br_child_, object);
             }
         }
     }
 }
 
 template <typename OBJECT_NAME, typename PointType, typename BoundType>
-QuadTreeNode<OBJECT_NAME, PointType, BoundType>* QuadTree<OBJECT_NAME, PointType, BoundType>::findnode_thisitem_existing(const std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>>& root, const OBJECT_NAME* object) {
+QuadTreeNode<OBJECT_NAME, PointType, BoundType>* QuadTree<OBJECT_NAME, PointType, BoundType>::findnode_thisitem_existing(const std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>>& current, const OBJECT_NAME* object) {
     
     if (!object) throw std::runtime_error("object is null");
-    if (!root) throw std::runtime_error("root is null");
+    if (!current) throw std::runtime_error("current is null");
     if (!position_getter_) throw std::runtime_error("position functor is null");
     // i could seperate the gaurds before the recursion
 
     const PointType& item = position_getter_(*object);
     
-    BoundType boundry = root->getBoundry();
+    BoundType boundry = current->getBoundry();
     PointType mid = (boundry.tl + boundry.br) / 2.0f;
 
-    if(root->getisleaf()) {
-        auto found = std::find(root->points_.begin(), root->points_.end(), object);
-        if (found != root->points_.end())
-            return root.get();
+    if(current->getisleaf()) {
+        auto found = std::find(current->points_.begin(), current->points_.end(), object);
+        if (found != current->points_.end())
+            return current.get();
         else
             return nullptr;
     } else {
-        PointType mid = (root->boundry_.tl + root->boundry_.br) / 2.0f;
+        mid = (current->boundry_.tl + current->boundry_.br) / 2.0f;
         if(item.x < mid.x) {
             if(item.y < mid.y) {
-                return findnode_thisitem_existing(root->tl_child_, object);
+                return findnode_thisitem_existing(current->tl_child_, object);
             } else {
-                return findnode_thisitem_existing(root->bl_child_, object);
+                return findnode_thisitem_existing(current->bl_child_, object);
             }
         } else {
             if(item.y < mid.y) {
-                return findnode_thisitem_existing(root->tr_child_, object);
+                return findnode_thisitem_existing(current->tr_child_, object);
             } else {
-                return findnode_thisitem_existing(root->br_child_, object);
+                return findnode_thisitem_existing(current->br_child_, object);
             }
         }
     }
@@ -312,7 +316,7 @@ void QuadTree<OBJECT_NAME, PointType, BoundType>::remove(std::unique_ptr<QuadTre
     if (!position_getter_) throw std::runtime_error("position functor is null");
     // i could seperate the gaurds before the recursion
 
-    const PointType& item = position_getter_(*object);
+    // const PointType& item = position_getter_(*object);
     
     BoundType boundry = root->getBoundry();
     PointType mid = (boundry.tl + boundry.br) / 2.0f;
@@ -343,11 +347,17 @@ void QuadTree<OBJECT_NAME, PointType, BoundType>::remove(std::unique_ptr<QuadTre
 
 template <typename OBJECT_NAME, typename PointType, typename BoundType>
 void QuadTree<OBJECT_NAME, PointType, BoundType>::cleanup(std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>>& node) {
-    // cleanupFromTopToBottom(node);
 
-    if(faultyList.empty())
-        return;
-    cleanupFromFaultyList3(node);
+    switch(cleanupstrategy_) {
+        case CleanupStrategy::FaultyList : 
+            if(faultyList.empty())
+                return;
+            cleanupFromFaultyList3();
+            break;
+        case CleanupStrategy::Sweep :
+            cleanupFromTopToBottom(node);
+            break;         
+    }
 }
 
 template <typename OBJECT_NAME, typename PointType, typename BoundType>
@@ -388,7 +398,7 @@ void QuadTree<OBJECT_NAME, PointType, BoundType>::ownChildsPointsAndDestroyChild
 
 
 template <typename OBJECT_NAME, typename PointType, typename BoundType>
-void QuadTree<OBJECT_NAME, PointType, BoundType>::cleanupFromFaultyList3(std::unique_ptr<QuadTreeNode<OBJECT_NAME, PointType, BoundType>>& node) {
+void QuadTree<OBJECT_NAME, PointType, BoundType>::cleanupFromFaultyList3() {
     while (!faultyList.empty()) {
         auto it = faultyList.begin();
         auto* leaf = *it;
@@ -437,7 +447,7 @@ void QuadTree<OBJECT_NAME, PointType, BoundType>::cleanupFromTopToBottom(std::un
         bl->points_.empty() &&
         br->points_.empty();
 
-    int total_points = tl->points_.size() + tr->points_.size() + bl->points_.size() + br->points_.size();
+    int total_points = static_cast<int>(tl->points_.size() + tr->points_.size() + bl->points_.size() + br->points_.size());
     
     bool canCollapseEmpty = allLeafsAreEmpty && !strictCollapseWhenUnderCapacity;
     bool canCollpaseWithPoints = (total_points < capacity_) && strictCollapseWhenUnderCapacity;

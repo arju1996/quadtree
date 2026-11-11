@@ -121,7 +121,7 @@ namespace Math {
         Vector2() = default;
         Vector2(float x, float y) : x(x), y(y) {
         }
-        Vector2(Point2i point) : x(point.x), y(point.y) {
+        Vector2(Point2i point) : x(static_cast<float>(point.x)), y(static_cast<float>(point.y)) {
         }
 
         Vector2 operator+(const Vector2& other) const {
@@ -146,27 +146,27 @@ namespace Math {
 
 
         void normalize() {
-            float magnitude = std::sqrt(std::pow(x, 2) + std::pow(y, 2));
+            double magnitude = std::sqrt(std::pow(x, 2) + std::pow(y, 2));
             if (magnitude != 0 && magnitude > 1) {
             // if (magnitude != 0 ) {
-                x /= magnitude;
-                y /= magnitude;
+                x /= static_cast<float>(magnitude);
+                y /= static_cast<float>(magnitude);
             }
         }
 
         void limitMagnitude(float limit) {
-            float magnitude = std::sqrt(std::pow(x, 2) + std::pow(y, 2));
+            double magnitude = std::sqrt(std::pow(x, 2) + std::pow(y, 2));
             if(magnitude > limit) {
-                x = x * limit / magnitude;
-                y = y * limit / magnitude;
+                x = x * limit / static_cast<float>(magnitude);
+                y = y * limit / static_cast<float>(magnitude);
             }
         }
 
         void minMagnitude(float limit) {
-            float magnitude = std::sqrt(std::pow(x, 2) + std::pow(y, 2));
+            double magnitude = std::sqrt(std::pow(x, 2) + std::pow(y, 2));
             if(magnitude < limit) {
-                x = x * limit / magnitude;
-                y = y * limit / magnitude;
+                x = x * limit / static_cast<float>(magnitude);
+                y = y * limit / static_cast<float>(magnitude);
             }
         }
 
@@ -209,7 +209,7 @@ namespace Math {
         }
 
         float angleDegree(Math::Vector2 vector) const {
-            const float EPSILON = 1e-6; // Define EPSILON as a small positive number
+            const float EPSILON = 1e-6f; // Define EPSILON as a small positive number
 
             float mag1 = this->getMagnitude();
             float mag2 = vector.getMagnitude();
@@ -222,7 +222,7 @@ namespace Math {
                              (mag1 * mag2);
             costheta = std::clamp(costheta, -1.0f, 1.0f);
             float angle  = acos(costheta);
-            return angle * (180.0 / PI);
+            return angle * static_cast<float>(180.0 / PI);
         }
 
         // w.r.to x axis
